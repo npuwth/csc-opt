@@ -16,6 +16,6 @@ CS380C: Advanced Compiler Techniques (utexas)
 ### Lab3: Single Static Assignment and Optimizations
 
 1. Build SSA Form;
-2. SSA-based Constant Propagatoin;
+2. SSA-based Constant Propagation;
 3. SSA-based Loop Invariant Code Motion;
-4. Translate back to non-SSA From;
+4. Translate back to non-SSA Form;

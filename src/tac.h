@@ -2,6 +2,13 @@
 #include<string>
 #include<unordered_map>
 
+typedef int64_t dt_long;
+typedef uint64_t dt_ulong;
+
+#define TYPE_NO 0 //normal address
+#define TYPE_FP 1 //fp address
+#define TYPE_GP 2 //gp address
+
 typedef enum {
 //Arithmetic
     ADD,
@@ -37,27 +44,47 @@ typedef enum {
 class Operand {
 public:
     virtual void Operand::dump() = 0;
+    virtual void Operand::toC() = 0;
 };
 
-class Variable: public Operand {
+class Constant: public Operand { //Constants
 public:
-    long num = 0;   //数值或地址
-    bool is_FP = 0;
-    bool is_GP = 0;
+    dt_ulong num = 0; //数值常量
 
-    void Variable::dump() {
-        if(is_FP) printf("FP");
-        else if(is_GP) printf("GP");
-        else printf("%ld", num);
+    Constant::Constant(dt_ulong num) {
+        this->num  = num;
+    }
+
+    void Constant::dump() {
+        printf("%ld", num);
     }
 };
 
-class Register: public Operand {
+class Address: public Operand { //Address_offsets or Field_offsets
 public:
-    long reg_index = 0; //虚拟寄存器数量无限
+    int type = 0;
+    dt_long addr = 0; //地址、偏移
+    std::string name;
 
-    Register::Register(long TacID) {
-        reg_index = TacID;
+    Address::Address(int type, dt_long addr=0, std::string name="") {
+        this->type = type;
+        this->addr = addr;
+        this->name = name;
+    }
+
+    void Address::dump() {
+        if(type == TYPE_FP) printf("FP");
+            else if(type == TYPE_GP) printf("GP");
+            else printf("%s#%ld", name, addr);
+    }
+};
+
+class Register: public Operand { //Register_names
+public:
+    dt_ulong reg_index = 0; //虚拟寄存器
+
+    Register::Register(dt_ulong RegID) {
+        this->reg_index = RegID;
     }
 
     void Register::dump() {
@@ -65,9 +92,28 @@ public:
     }
 };
 
-class Label: public Operand {
+class Variable: public Operand { //Local_variables
 public:
-    long instr_pos = 0;
+    std::string name;
+    dt_long offset = 0;
+
+    Variable::Variable(std::string name, dt_long offset) {
+        this->name = name;
+        this->offset = offset;
+    }
+
+    void Variable::dump() {
+        printf("%s#%ld", name, offset);
+    }
+};
+
+class Label: public Operand { //Instruction_labels
+public:
+    dt_ulong instr_pos = 0; //指令标签
+
+    Label::Label(dt_ulong TacID) {
+        this->instr_pos = TacID;
+    }
 
     void Label::dump() {
         printf("[%ld]", instr_pos);
@@ -76,13 +122,13 @@ public:
 
 class Tac {
 private:
-    long TacID = 0;
+    dt_ulong TacID = 0;
     Type opcode = ADD;
     Operand *dest;
     Operand *src0;
     Operand *src1;
 public:
-    Tac::Tac(long TacID, int opcode, Operand *src0, Operand *src1) {
+    Tac::Tac(dt_ulong TacID, int opcode, Operand *src0=NULL, Operand *src1=NULL) {
         this->TacID  = TacID;
         this->opcode = Type(opcode);
         this->src0   = src0;
