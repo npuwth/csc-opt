@@ -3,11 +3,13 @@
 #include<string>
 #include"tac.h"
 
+#define CSSidlen 16
+
 // FILE *fp;
 Program pg;
-char ch;
+char ch, chars[CSSidlen];
 
-dt_ulong Number() { //根据定义读取的只可能是uint64_t
+dt_ulong Number() { //Constants范围：uint64_t
     dt_ulong ans = 0;
     while(('0' <= ch) && (ch <= '9') && ((0x8000000000000000ULL + '0' - ch) / 10 >= ans)) {
         ans = ans*10 + ch - '0';
@@ -15,6 +17,22 @@ dt_ulong Number() { //根据定义读取的只可能是uint64_t
     }
     if(('0' <= ch) && (ch <= '9')) printf("Error: Number Too Large!\n");
     return ans;
+}
+
+std::string Identifier() {
+    int i = 0;
+    // chars[i++] = ch;
+    while((('a' <= ch) && (ch <= 'z')) || (('A' <= ch) && (ch <= 'Z')) || (('0' <= ch) && (ch <= '9')) || (ch == '_')) {
+        if(i < CSSidlen) chars[i] = ch;
+        i++;
+        ch = getc(stdin);
+    }
+    if(i >= CSSidlen) {
+        printf("Error: Identifier Too Long!\n");
+        return " ";
+    }
+    chars[i] = 0;
+    return chars;
 }
 
 Operand* parse_operand() {
@@ -49,9 +67,18 @@ Operand* parse_operand() {
             operand = new Constant(Number());
             break;
         default: //Address_offsets or Field_offsets or Local_variables
-            ch = getc(stdin);
-            //TODO:
-            operand = new Address(TYPE_NO);
+            std::string name = Identifier();
+            // ch = getc(stdin);
+            if(ch == '#') {
+                dt_long addr;
+                scanf("%ld", &addr);
+                operand = new Address(TYPE_NO, addr, name);
+            } else if(ch == '@') {
+                dt_long offset;
+                scanf("%ld", &offset);
+                operand = new Variable(name, offset);
+            }
+            ch = getc(stdin); //' ' or '\n'
     }
     return operand;
 }
@@ -60,38 +87,63 @@ void parse_tac_file() {
     std::string c;
     dt_ulong TacID;
     std::string op;
-    while(std::cin >> c) {
-        std::cin >> TacID;
+    Scope *scope = pg.insertScope(); //global scope
+    while(std::cin >> c) { //"instr"
+        // printf("%s\n", c.c_str());
+        scanf("%ld", &TacID);
+        // printf("%ld\n", TacID);
+        ch = getc(stdin); //':'
+        // printf("%c\n", ch);
         std::cin >> op;
+        ch = getc(stdin); //' '
+        // printf("%s\n", op.c_str());
         int opcode = pg.get_opcode(op);
+        // printf("%d\n", opcode);
+        Tac *tac = nullptr;
+        Operand *src0, *src1;
         switch(opcode) {
             case ADD: case SUB: case MUL: case DIV:
             case MOD: case CMPEQ: case CMPLE: case CMPLT: 
             case BLBC: case BLBS: case STORE: case MOVE:
-                Operand *src0 = parse_operand();
-                Operand *src1 = parse_operand();
-                Tac *tac = new Tac(TacID, opcode, src0, src1);
-
+                src0 = parse_operand();
+                src1 = parse_operand();
+                tac = new Tac(TacID, opcode, op, src0, src1);
+                scope->insertTac(tac);
                 break;
-            case NEG: case BR: case CALL: case LOAD:
-            case PARAM: case ENTER: case RET: case WRITE:
-                Operand *src0 = parse_operand();
-                Tac *tac = new Tac(TacID, opcode, src0);
-
+            case NEG: case BR: case CALL: 
+            case PARAM: case WRITE: case LOAD:
+                src0 = parse_operand();
+                tac = new Tac(TacID, opcode, op, src0);
+                scope->insertTac(tac);
                 break;
-
-            case READ: case WRL: case ENTRYPC:
-                Tac *tac = new Tac(TacID, opcode);
-
+            case ENTER:
+                src0 = parse_operand();
+                tac = new Tac(TacID, opcode, op, src0);
+                scope->insertTac(tac);
+                scope = pg.insertScope();
                 break;
-            case NOP:
+            case RET:
+                src0 = parse_operand();
+                tac = new Tac(TacID, opcode, op, src0);
+                scope->insertTac(tac);
+                scope = pg.popScope();
+                break;
+            case READ: case WRL: case NOP:
+                tac = new Tac(TacID, opcode, op);
+                scope->insertTac(tac);
+                break;
+            case ENTRYPC: 
+                tac = new Tac(TacID, opcode, op);
+                scope->insertTac(tac);
+                scope = pg.insertScope();
                 break;
             default: 
                 printf("Error: Opcode Not Recogonized!\n");
                 return;
         }
+        // tac->dump();
     }
-    printf("TAC File Parsed Successfully.\n");
+    // printf("TAC File Parsed Successfully.\n");
     return;
 }
 
@@ -104,7 +156,10 @@ int main(int argc, char *argv[]) {
         // fp = fopen(argv[1], "r");
         freopen(argv[1], "r", stdin);
     }
+
     parse_tac_file();
+
+    pg.dump();
 
     return 0;
 }

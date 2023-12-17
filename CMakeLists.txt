@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 3.13)
-project(compiler)
+project(csc-opt)
 set(CMAKE_CXX_STANDARD 17)
 # add_definitions(-O0 -g3 -ggdb)
+add_definitions(-Wall -g)
 
 # 定义变量
 set(PROJ_DIR ${CMAKE_CURRENT_SOURCE_DIR})

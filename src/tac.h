@@ -1,4 +1,5 @@
 #include<vector>
+#include<stack>
 #include<string>
 #include<unordered_map>
 
@@ -43,20 +44,24 @@ typedef enum {
 
 class Operand {
 public:
-    virtual void Operand::dump() = 0;
-    virtual void Operand::toC() = 0;
+    virtual void dump() = 0;
+    virtual void toC() = 0;
 };
 
 class Constant: public Operand { //Constants
 public:
     dt_ulong num = 0; //数值常量
 
-    Constant::Constant(dt_ulong num) {
+    Constant(dt_ulong num) {
         this->num  = num;
     }
 
-    void Constant::dump() {
+    void dump() {
         printf("%ld", num);
+    }
+
+    void toC () {
+        ;
     }
 };
 
@@ -66,16 +71,20 @@ public:
     dt_long addr = 0; //地址、偏移
     std::string name;
 
-    Address::Address(int type, dt_long addr=0, std::string name="") {
+    Address(int type, dt_long addr=0, std::string name="") {
         this->type = type;
         this->addr = addr;
         this->name = name;
     }
 
-    void Address::dump() {
+    void dump() {
         if(type == TYPE_FP) printf("FP");
             else if(type == TYPE_GP) printf("GP");
-            else printf("%s#%ld", name, addr);
+            else printf("%s#%ld", name.c_str(), addr);
+    }
+
+    void toC () {
+        ;
     }
 };
 
@@ -83,12 +92,16 @@ class Register: public Operand { //Register_names
 public:
     dt_ulong reg_index = 0; //虚拟寄存器
 
-    Register::Register(dt_ulong RegID) {
+    Register(dt_ulong RegID) {
         this->reg_index = RegID;
     }
 
-    void Register::dump() {
+    void dump() {
         printf("(%ld)", reg_index);
+    }
+
+    void toC () {
+        ;
     }
 };
 
@@ -97,13 +110,17 @@ public:
     std::string name;
     dt_long offset = 0;
 
-    Variable::Variable(std::string name, dt_long offset) {
+    Variable(std::string name, dt_long offset) {
         this->name = name;
         this->offset = offset;
     }
 
-    void Variable::dump() {
-        printf("%s#%ld", name, offset);
+    void dump() {
+        printf("%s@%ld", name.c_str(), offset);
+    }
+
+    void toC () {
+        ;
     }
 };
 
@@ -111,12 +128,16 @@ class Label: public Operand { //Instruction_labels
 public:
     dt_ulong instr_pos = 0; //指令标签
 
-    Label::Label(dt_ulong TacID) {
+    Label(dt_ulong TacID) {
         this->instr_pos = TacID;
     }
 
-    void Label::dump() {
+    void dump() {
         printf("[%ld]", instr_pos);
+    }
+
+    void toC () {
+        ;
     }
 };
 
@@ -124,52 +145,71 @@ class Tac {
 private:
     dt_ulong TacID = 0;
     Type opcode = ADD;
-    Operand *dest;
-    Operand *src0;
-    Operand *src1;
+    std::string opname;
+    Operand *dest = nullptr;
+    Operand *src0 = nullptr;
+    Operand *src1 = nullptr;
 public:
-    Tac::Tac(dt_ulong TacID, int opcode, Operand *src0=NULL, Operand *src1=NULL) {
+    Tac(dt_ulong TacID, int opcode, std::string opname, Operand *src0=nullptr, Operand *src1=nullptr) {
         this->TacID  = TacID;
         this->opcode = Type(opcode);
+        this->opname = opname;
+        // printf("judge: %d\n", src0 == nullptr);
         this->src0   = src0;
         this->src1   = src1;
         this->dest   = new Register(TacID);
     };
 
-    void Tac::dump() {
-        printf("instr %ld: %d ", TacID, opcode);
-        if(src0 != NULL) {
-            src0->dump();
-        }
-        if(src1 != NULL) {
-            src1->dump();
-        }
+    void dump() {
+        printf("\tinstr %ld: %s ", TacID, opname.c_str());
+        if(src0 != nullptr) src0->dump();
+        printf(" ");
+        if(src1 != nullptr) src1->dump();
         printf("\n");
+    }
+
+    void toC() {
+        ;
     }
 };
 
 class Scope {
 public:
+    dt_ulong ScopeID = 0;
+    //0为global scope
     std::vector<Tac*> Tacs;
 
-    Scope::Scope() {
+    Scope(dt_ulong ScopeID) {
         Tacs.clear();
+        this->ScopeID = ScopeID;
+    }
+
+    void insertTac(Tac *tac) {
+        Tacs.push_back(tac);
     }
     
-    void Scope::dump() {
+    void dump() {
         for(auto it = Tacs.begin(); it != Tacs.end(); it++) {
             (*it)->dump();
         }
         printf("\n");
+    }
+
+    void toC() {
+        ;
     }
 };
 
 class Program {
 public:
     std::vector<Scope*> Scopes;
+    std::stack<Scope*> ScopeStack;
     std::unordered_map<std::string, int> mp;
+    dt_ulong ScopeID = 0;
 
-    Program::Program() {
+    Program() {
+        Scopes.clear();
+        while(!ScopeStack.empty()) ScopeStack.pop();
         mp["add"] = ADD;
         mp["sub"] = SUB;
         mp["mul"] = MUL;
@@ -196,13 +236,29 @@ public:
         mp["nop"] = NOP;
     }
 
-    int Program::get_opcode(std::string op) {
+    int get_opcode(std::string op) {
         return mp[op];
     }
 
-    void Program::dump() {
+    Scope* insertScope() {
+        Scope *scope = new Scope(ScopeID++);
+        Scopes.push_back(scope);
+        ScopeStack.push(scope);
+        return scope;
+    }
+    
+    Scope* popScope() {
+        ScopeStack.pop();
+        return ScopeStack.top();
+    }
+
+    void dump() {
         for(auto it = Scopes.begin(); it != Scopes.end(); it++) {
             (*it)->dump();
         }
+    }
+    
+    void toC() {
+        ;
     }
 };
