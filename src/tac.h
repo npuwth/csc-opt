@@ -160,6 +160,22 @@ public:
         this->dest   = new Register(TacID);
     };
 
+    dt_ulong getTacID() {
+        return this->TacID;
+    }
+
+    int getOpcode() {
+        return this->opcode;
+    }
+
+    Operand* getSrc0() {
+        return this->src0;
+    }
+
+    Operand* getSrc1() {
+        return this->src1;
+    }
+
     void dump() {
         printf("\tinstr %ld: %s ", TacID, opname.c_str());
         if(src0 != nullptr) src0->dump();
