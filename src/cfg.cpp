@@ -121,7 +121,6 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
             switch(tac->getOpcode())
             {
                 case Type::BR://无条件跳转
-                    tac->dump();
                     succ_tacid = ((Label*)(tac->getSrc0()))->instr_pos;
                     if(id_to_block[succ_tacid] == nullptr)
                         cfg_error();
@@ -160,11 +159,11 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
     return cfg_prog;
 }
 
-void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool simple)
+void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all)
 {
     if(block->get_index() < 0)
         return; //不输出entry和exit
-    if(!simple)
+    if(show_all)
     {
         os << "Basic Block: " << block->get_index() << std::endl;
         os << "---TACs:" << std::endl;
@@ -178,11 +177,11 @@ void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool simple)
     if(block->out_degree() == 2 && block->get_succ(1)->get_index() >= 0)
         os << " " << block->get_succ(1)->get_index();
     os << std::endl;
-    if(!simple)
+    if(show_all)
         os << std::endl;
 }
 
-void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os)
+void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all)
 {
     // bfs序输出基本块
     std::set<CFGBlock*> is_printed;
@@ -191,7 +190,7 @@ void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os)
     while(!q.empty()){
         CFGBlock* now = q.front();
         q.pop();
-        dump_cfg_block(now, os, false);
+        dump_cfg_block(now, os, show_all);
         for (int k = 1; k >= 0; --k) {
             if (now->get_succ(k) != nullptr && is_printed.find(now->get_succ(k)) == is_printed.end()) {
                 q.push(now->get_succ(k));
@@ -204,11 +203,11 @@ void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os)
 void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool show_all)
 {
     os << "Function: " << proc->get_index();
-    // if(proc->is_main())
-    //     os << " main";
+    if(show_all && proc->is_main())
+        os << " main" << std::endl;
     os << std::endl;
     if(show_all)
-        dump_cfg(proc->get_entry(), os);
+        dump_cfg(proc->get_entry(), os, show_all);
     else
     {
         os << "Basic Blocks:";
@@ -221,10 +220,10 @@ void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool sh
     }
 }
 
-void CFGManager::dump_cfg_program(CFGProgram& prog,std::ostream& os)
+void CFGManager::dump_cfg_program(CFGProgram& prog,std::ostream& os, bool show_all)
 {
     for(auto& proc: prog)
-        dump_cfg_procedure(proc, os);
+        dump_cfg_procedure(proc, os, show_all);
 
 }
 

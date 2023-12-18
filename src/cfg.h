@@ -44,10 +44,10 @@ private:
     int m_index{0};                              //过程编号
     CFGBlock* m_entry;                           //表示虚拟的入口块，内部为空
     CFGBlock* m_exit;                            //表示虚拟的出口块，内部为空
-    std::list<CFGBlock*> m_blocks;                //记录所有基本块
+    std::list<CFGBlock*> m_blocks;               //记录所有基本块
     bool m_main{false};                          //是否为main函数
 public:
-    CFGProcedure(int i_index, CFGBlock* i_entry=nullptr, CFGBlock* i_exit=nullptr):m_entry(i_entry),m_exit(i_exit),m_index(i_index){m_main = false;}
+    CFGProcedure(int i_index, CFGBlock* i_entry=nullptr, CFGBlock* i_exit=nullptr):m_index(i_index),m_entry(i_entry),m_exit(i_exit){}
     ~CFGProcedure(){}
     static CFGProcedure* create_procedure();
     //set
@@ -72,10 +72,10 @@ private:
     static void cfg_error();
 public:
     static CFGProgram* gen_from_program(Program& prog);             //从Program生成CFGProgram
-    static void dump_cfg_block(CFGBlock* block,std::ostream& os, bool simple = true);
-    static void dump_cfg(CFGBlock* entry,std::ostream& os);
+    static void dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all = false);
+    static void dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all = false);
     static void dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool show_all = false);
-    static void dump_cfg_program(CFGProgram& prog,std::ostream& os=std::cout);
+    static void dump_cfg_program(CFGProgram& prog,std::ostream& os=std::cout, bool show_all = false);
 };
 
 

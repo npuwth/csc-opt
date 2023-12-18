@@ -1,28 +1,10 @@
 #include "pass.h"
-
-void SimpleConstantPropagation::run() {
-
-}
-
-void DeadStatementElimination::run() {
-
-}
-
-void ConvertSSA::run() {
-
-}
-
-void RevertSSA::run() {
-
-}
-
-void CommonSubexpressionElimination::run() {
-
-}
-
-void LoopInvariantCodeMotion::run() {
-
-}
+#include "simple_constant_propagation.h"
+#include "dead_statement_elimination.h"
+#include "convert_ssa.h"
+#include "revert_ssa.h"
+#include "common_subexpression_elimination.h"
+#include "loop_invariant_code_motion.h"
 
 void Optimizer::add_pass(PassType pass_type)
 {
@@ -58,4 +40,5 @@ void Optimizer::run_pass()
 {
     for(auto& pass: m_passes)
         pass->run();
+    m_passes.clear();
 }

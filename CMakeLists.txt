@@ -12,6 +12,7 @@ set(EXECUTABLE_OUTPUT_PATH ${BUILD_DIR})
 
 # 添加头文件目录
 include_directories(${SOURCE_DIR})
+include_directories(${SOURCE_DIR}/pass)
 # 添加所有源文件
 file(GLOB_RECURSE SRC_CPP ${SOURCE_DIR}/*.cpp)
 # 添加目标文件
