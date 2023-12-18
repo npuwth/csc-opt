@@ -1,3 +1,5 @@
+#ifndef __TAC_H__
+#define __TAC_H__
 #include<vector>
 #include<stack>
 #include<string>
@@ -287,3 +289,8 @@ public:
         ;
     }
 };
+
+void parse_tac_file();
+extern Program pg;
+
+#endif
