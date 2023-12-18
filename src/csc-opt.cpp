@@ -119,8 +119,8 @@ void parse_tac_file() {
             case ENTER:
                 src0 = parse_operand();
                 tac = new Tac(TacID, opcode, op, src0);
-                scope->insertTac(tac);
                 scope = pg.insertScope();
+                scope->insertTac(tac);
                 break;
             case RET:
                 src0 = parse_operand();
@@ -135,7 +135,8 @@ void parse_tac_file() {
             case ENTRYPC: 
                 tac = new Tac(TacID, opcode, op);
                 scope->insertTac(tac);
-                scope = pg.insertScope();
+                pg.setMainScope();
+                // scope = pg.insertScope();
                 break;
             default: 
                 printf("Error: Opcode Not Recogonized!\n");

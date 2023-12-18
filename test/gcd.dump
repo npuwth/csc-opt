@@ -1,5 +1,8 @@
 	instr 1: nop  
-	instr 2: enter 8
+	instr 17: entrypc  
+	instr 51: nop  
+
+	instr 2: enter 8 
 	instr 3: cmpeq b@16 0
 	instr 4: blbs (3) [14]
 	instr 5: move a@24 c@-8
@@ -14,8 +17,8 @@
 	instr 14: add res_base#32744 GP
 	instr 15: store a@24 (14)
 	instr 16: ret 16 
-    instr 17: entrypc
-	instr 18: enter 0
+
+	instr 18: enter 0 
 	instr 19: add a_base#32760 GP
 	instr 20: store 25733 (19)
 	instr 21: add b_base#32752 GP
@@ -48,4 +51,4 @@
 	instr 48: write (47) 
 	instr 49: wrl  
 	instr 50: ret 0 
-    instr 51: nop
+

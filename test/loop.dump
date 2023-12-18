@@ -1,5 +1,7 @@
 	instr 1: nop  
 	instr 2: entrypc  
+	instr 48: nop  
+
 	instr 3: enter 64 
 	instr 4: move 13 n@-56
 	instr 5: move 0 x@-64
@@ -45,4 +47,4 @@
 	instr 45: write x@-64 
 	instr 46: wrl  
 	instr 47: ret 0 
-	instr 48: nop
+

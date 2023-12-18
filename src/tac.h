@@ -192,12 +192,15 @@ public:
 class Scope {
 public:
     dt_ulong ScopeID = 0;
-    //0为global scope
+    //ScopeID=0为global scope
+    //其他为local scope（函数）
     std::vector<Tac*> Tacs;
+    bool MainScope = 0; //main function
 
-    Scope(dt_ulong ScopeID) {
+    Scope(dt_ulong ScopeID, bool MainScope) {
         Tacs.clear();
         this->ScopeID = ScopeID;
+        this->MainScope = MainScope;
     }
 
     void insertTac(Tac *tac) {
@@ -222,6 +225,7 @@ public:
     std::stack<Scope*> ScopeStack;
     std::unordered_map<std::string, int> mp;
     dt_ulong ScopeID = 0;
+    bool MainScope = 0;
 
     Program() {
         Scopes.clear();
@@ -256,8 +260,13 @@ public:
         return mp[op];
     }
 
+    void setMainScope() {
+        this->MainScope = 1;
+    }
+
     Scope* insertScope() {
-        Scope *scope = new Scope(ScopeID++);
+        Scope *scope = new Scope(ScopeID++, MainScope);
+        MainScope = 0;
         Scopes.push_back(scope);
         ScopeStack.push(scope);
         return scope;
