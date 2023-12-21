@@ -2,6 +2,8 @@
 #define __SIMPLE_CONSTANT_PROPAGATION_H__
 #include "pass.h"
 #include "bitmap.h"
+#include <cassert>
+
 namespace SCP
 {
     struct Definition{
@@ -20,12 +22,15 @@ private:
     std::vector<BitMap> m_kill;
     std::vector<BitMap> m_in;
     std::vector<BitMap> m_out;
-public:
-    SimpleConstantPropagation(CFGProgram* i_cfg) :Pass(i_cfg) {}
     // 到达定值
     void initial_definitions(CFGProcedure* proc);
-    void compute_gen_and_kill();
-    void compute_in_and_out();
+    void compute_gen_and_kill(CFGProcedure* proc);
+    void compute_in_and_out(CFGProcedure* proc);
+    void gen(int blk_idx, Tac* tac, Operand* oper);
+    void kill(int blk_idx, Tac* tac, Operand* oper);
+    void print_reaching_definition();
+public:
+    SimpleConstantPropagation(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();
 };
 
