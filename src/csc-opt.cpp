@@ -58,19 +58,6 @@ int main(int argc, char *argv[]) {
     config.backend = split_string(b_options, ',');
     config.optimization = split_string(o_options, ',');
 
-    // //debug
-    // printf("Backends:\n");
-    // for(auto it = config.backend.begin(); it != config.backend.end(); it++) {
-    //     printf("\t%s\n", it->c_str());
-    // }
-    // printf("Optimizations:\n");
-    // for(auto it = config.optimization.begin(); it != config.optimization.end(); it++) {
-    //     printf("\t%s\n", it->c_str());
-    // }
-    // printf("Source File:\n");
-    // printf("\t%s\n", config.filename.c_str());
-    // return 0;
-
     if(config.i_filename.empty()) {
         printf("Error: No Source File Specified!\n");
         return 1;

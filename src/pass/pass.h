@@ -1,5 +1,6 @@
 #ifndef __PASS_H__
 #define __PASS_H__
+#include "tac.h"
 #include "cfg.h"
 
 //优化类型
@@ -15,7 +16,7 @@ enum class PassType :int
 
 class Pass
 {
-private:
+protected:
     CFGProgram* m_cfg;  //pass执行对象
 public:
     Pass(CFGProgram* i_cfg): m_cfg(i_cfg) {}

@@ -148,7 +148,7 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
                     current_block->set_edge(0, id_to_block[succ_tacid]);
                     break;
                 case Type::ENTER://过程进入
-                    cfg_proc->set_index(tacid);
+                    cfg_proc->set_id(tacid);
                     break;
                 case Type::RET://过程返回
                     current_block->set_edge(0, cfg_proc->get_exit());
@@ -164,21 +164,21 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
 
 void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all)
 {
-    if(block->get_index() < 0)
+    if(block->get_id() < 0)
         return; //不输出entry和exit
     if(show_all)
     {
-        os << "Basic Block: " << block->get_index() << std::endl;
+        os << "Basic Block: " << block->get_id() << std::endl;
         os << "---TACs:" << std::endl;
         for(auto& tac: block->get_tac_list())
             tac->dump();
         os << "---Edges:" << std::endl << "\t";
     }
-    os << block->get_index() << " -> ";
-    if(block->get_succ(0)->get_index() >= 0)
-        os << block->get_succ(0)->get_index();
-    if(block->out_degree() == 2 && block->get_succ(1)->get_index() >= 0)
-        os << " " << block->get_succ(1)->get_index();
+    os << block->get_id() << " -> ";
+    if(block->get_succ(0)->get_id() >= 0)
+        os << block->get_succ(0)->get_id();
+    if(block->out_degree() == 2 && block->get_succ(1)->get_id() >= 0)
+        os << " " << block->get_succ(1)->get_id();
     os << std::endl;
     if(show_all)
         os << std::endl;
@@ -205,7 +205,7 @@ void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all)
 
 void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool show_all)
 {
-    os << "Function: " << proc->get_index();
+    os << "Function: " << proc->get_id();
     if(show_all && proc->is_main())
         os << " main" << std::endl;
     os << std::endl;
@@ -215,7 +215,7 @@ void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool sh
     {
         os << "Basic Blocks:";
         for(auto& block: proc->get_blocks())
-            std::cout << " " << block->get_index();
+            std::cout << " " << block->get_id();
         os << std::endl;
         os << "CFG:" << std::endl;
         for(auto& block: proc->get_blocks())
