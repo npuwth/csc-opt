@@ -46,6 +46,8 @@ typedef enum {
 
 class Operand {
 public:
+    std::vector<int> def_id;    // 到达定值分析中对应的定值列表
+    Operand() {def_id.clear();}
     virtual void dump() = 0;
     virtual void toC() = 0;
 };
@@ -168,6 +170,10 @@ public:
 
     int getOpcode() {
         return this->opcode;
+    }
+
+    Operand* getDest() {
+        return this->dest;
     }
 
     Operand* getSrc0() {
