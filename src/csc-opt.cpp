@@ -10,7 +10,8 @@
 struct Config {
     std::vector<std::string> backend;
     std::vector<std::string> optimization;
-    std::string filename;
+    std::string i_filename;
+    std::string o_filename;
 } config;
 
 std::vector<std::string> split_string(const std::string& s, char seperator) {
@@ -27,15 +28,7 @@ std::vector<std::string> split_string(const std::string& s, char seperator) {
 
 int main(int argc, char *argv[]) {
     
-    // if(argc < 2) {
-    //     printf("Usage: ./csc-opt xxx.tac\n");
-    //     return 1;
-    // } else {
-    //     // fp = fopen(argv[1], "r");
-    //     freopen(argv[1], "r", stdin);
-    // }
-
-    //参数解析
+    // 参数解析
     std::string b_options;
     std::string o_options;
     bool showhelp = false;
@@ -46,7 +39,10 @@ int main(int argc, char *argv[]) {
         | lyra::opt(o_options, "optimization")
             ["--opt"]
             ("which optimizations to use?")
-        | lyra::arg(config.filename, "source file")
+        | lyra::opt(config.o_filename, "destFile")
+            ["-o"]["--output"]
+            ("which dest file to use?")
+        | lyra::arg(config.i_filename, "sourceFile")
             ("which source file to use?");
 
     auto result = cli.parse({argc, argv});
@@ -75,35 +71,68 @@ int main(int argc, char *argv[]) {
     // printf("\t%s\n", config.filename.c_str());
     // return 0;
 
+    if(config.i_filename.empty()) {
+        printf("Error: No Source File Specified!\n");
+        return 1;
+    } else {
+        // fp = fopen(argv[1], "r");
+        if(freopen(config.i_filename.c_str(), "r", stdin) == nullptr) {
+            printf("Error: Cannot Open Source File!\n");
+            return 1;
+        }
+    }
+    if(!config.o_filename.empty())
+        if(freopen(config.o_filename.c_str(), "w", stdout) == nullptr) {
+            printf("Error: Cannot Open Dest File!\n");
+            return 1;
+        }
+
     // 前端
     parse_tac_file();
-    std::cout << "------TAC------" << std::endl;
-    // pg.dump();
-    std::cout << "---------------" << std::endl;
 
-    // 中间表示
+    // 中间表示cfg
     CFGProgram* cfg = CFGManager::gen_from_program(pg);
-    std::cout << "------simple CFG------" << std::endl;
-    CFGManager::dump_cfg_program(*cfg, std::cout);
-    std::cout << "----------------------" << std::endl;
 
     // 分析与优化
     Optimizer optimizer = Optimizer(cfg);
-    // lab2
-    optimizer.add_pass(PassType::SimpleConstantPropagation);
-    optimizer.add_pass(PassType::DeadStatementElimination);
-    optimizer.run_pass();
-    // lab3
-    optimizer.add_pass(PassType::ConvertSSA);
-    optimizer.add_pass(PassType::CommonSubexpressionElimination);
-    optimizer.add_pass(PassType::LoopInvariantCodeMotion);
-    optimizer.add_pass(PassType::RevertSSA);
+    for(auto& opt: config.optimization) {
+        if(opt == "scp") {
+            optimizer.add_pass(PassType::SimpleConstantPropagation);
+        } else if(opt == "cse") {
+            optimizer.add_pass(PassType::CommonSubexpressionElimination);
+        } else if(opt == "dse") {
+            optimizer.add_pass(PassType::DeadStatementElimination);
+        } else if(opt == "licm") {
+            optimizer.add_pass(PassType::LoopInvariantCodeMotion);
+        } else if(opt == "ssa") {
+            optimizer.add_pass(PassType::ConvertSSA);
+        }
+    }
+    // optimizer.add_pass(PassType::RevertSSA); //TODO
     optimizer.run_pass();
 
     // 后端
-    std::cout << "------complete CFG------" << std::endl;
-    // CFGManager::dump_cfg_program(*cfg, std::cout, true);
-    std::cout << "------------------------" << std::endl;
+    for(auto& opt: config.backend) {
+        if(opt == "c") {
+            ;
+        } else if(opt == "cfg") {
+            std::cout << "------simple CFG------" << std::endl;
+            CFGManager::dump_cfg_program(*cfg, std::cout);
+            std::cout << "----------------------" << std::endl;
+            //?
+            std::cout << "------complete CFG------" << std::endl;
+            // CFGManager::dump_cfg_program(*cfg, std::cout, true);
+            std::cout << "------------------------" << std::endl;
+        } else if(opt == "3addr") {
+            std::cout << "------TAC------" << std::endl;
+            pg.dump();
+            std::cout << "---------------" << std::endl;
+        } else if(opt == "rep") { //report
+            ;
+        } else if(opt == "ssa") {
+            ;
+        }
+    }
 
     return 0;
 }

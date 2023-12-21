@@ -37,12 +37,20 @@ std::string Identifier() {
 
 Operand* parse_operand() {
     Operand *operand;
+    Operand *find_result;
+    int number;
     //use getc() to parse operands like css.c
     ch = getc(stdin);
     switch(ch) {
         case '(': //Register_names
             ch = getc(stdin);
-            operand = new Register(Number());
+            number = Number();
+            find_result = pg.findOperand("(" + std::to_string(number) + ")");
+            if(find_result != nullptr) operand = find_result;
+            else {
+                operand = new Register(number);
+                pg.insertOperand("(" + std::to_string(number) + ")", operand);
+            }
             //')' will be read by Number()
             ch = getc(stdin); //' ' or '\n'
             break;
@@ -76,7 +84,12 @@ Operand* parse_operand() {
             } else if(ch == '@') {
                 dt_long offset;
                 scanf("%ld", &offset);
-                operand = new Variable(name, offset);
+                find_result = pg.findOperand(name);
+                if(find_result != nullptr) operand = find_result;
+                else {
+                    operand = new Variable(name, offset);
+                    pg.insertOperand(name, operand);
+                }
             }
             ch = getc(stdin); //' ' or '\n'
     }

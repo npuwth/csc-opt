@@ -52,10 +52,12 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
         CFGProcedure* cfg_proc = CFGProcedure::create_procedure();
         if(scope->MainScope)
             cfg_proc->set_main();
-        int first_tacid = scope->Tacs.front()->getTacID();
+        if(scope->Tac_head == nullptr) printf("Error: Empty Scope!\n");
+        int first_tacid = scope->Tac_head->getTacID();
         int tacid = 0;
         //第一遍遍历tac，确定基本块开头并创建基本块
-        for(auto& tac: scope->Tacs)
+        Tac *tac = scope->Tac_head;
+        for(;tac != nullptr; tac = tac->getSucTac())
         {
             switch(tac->getOpcode())
             {
@@ -96,7 +98,8 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
         cfg_proc->get_entry()->set_edge(0, id_to_block[first_tacid]);
         CFGBlock* current_block = id_to_block[first_tacid];
         //第二遍遍历tac，向基本块中添加指令并连接基本块
-        for(auto& tac: scope->Tacs)
+        tac = scope->Tac_head;
+        for(;tac != nullptr; tac = tac->getSucTac())
         {
             int succ_tacid = 0;
             tacid = tac->getTacID();

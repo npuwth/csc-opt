@@ -151,6 +151,8 @@ private:
     Operand *dest = nullptr;
     Operand *src0 = nullptr;
     Operand *src1 = nullptr;
+    Tac *preTac;
+    Tac *sucTac;
 public:
     Tac(dt_ulong TacID, int opcode, std::string opname, Operand *src0=nullptr, Operand *src1=nullptr) {
         this->TacID  = TacID;
@@ -178,6 +180,15 @@ public:
         return this->src1;
     }
 
+    void connectTac(Tac *tac) {
+        this->sucTac = tac;
+        tac->preTac = this;
+    }
+
+    Tac* getSucTac() {
+        return this->sucTac;
+    }
+
     void dump() {
         printf("\tinstr %ld: %s ", TacID, opname.c_str());
         if(src0 != nullptr) src0->dump();
@@ -196,22 +207,41 @@ public:
     dt_ulong ScopeID = 0;
     //ScopeID=0为global scope
     //其他为local scope（函数）
-    std::vector<Tac*> Tacs;
+    // std::vector<Tac*> Tacs;
+    Tac *Tac_head;
+    Tac *Tac_cur;
     bool MainScope = 0; //main function
+    std::unordered_map<std::string, Operand*> sym; //symbol table
 
     Scope(dt_ulong ScopeID, bool MainScope) {
-        Tacs.clear();
+        // Tacs.clear();
+        Tac_head = nullptr;
+        Tac_cur  = nullptr;
         this->ScopeID = ScopeID;
         this->MainScope = MainScope;
     }
 
     void insertTac(Tac *tac) {
-        Tacs.push_back(tac);
+        // Tacs.push_back(tac);
+        if(Tac_cur != nullptr) {
+            Tac_cur->connectTac(tac);
+            Tac_cur = tac;
+        } else {
+            Tac_head = tac;
+            Tac_cur  = tac;
+        }
+    }
+
+    void removeTac(Tac *tac) {
+        //TODO
+        ;
     }
     
     void dump() {
-        for(auto it = Tacs.begin(); it != Tacs.end(); it++) {
-            (*it)->dump();
+        Tac *p = this->Tac_head;
+        while(p != nullptr) {
+            p->dump();
+            p = p->getSucTac();
         }
         printf("\n");
     }
@@ -224,14 +254,17 @@ public:
 class Program {
 public:
     std::vector<Scope*> Scopes;
-    std::stack<Scope*> ScopeStack;
+    std::vector<Scope*> ScopeStack;
+    dt_ulong stackTop = 0;
     std::unordered_map<std::string, int> mp;
     dt_ulong ScopeID = 0;
     bool MainScope = 0;
 
     Program() {
         Scopes.clear();
-        while(!ScopeStack.empty()) ScopeStack.pop();
+        // while(!ScopeStack.empty()) ScopeStack.pop();
+        ScopeStack.clear();
+        stackTop = 0;
         mp["add"] = ADD;
         mp["sub"] = SUB;
         mp["mul"] = MUL;
@@ -270,13 +303,37 @@ public:
         Scope *scope = new Scope(ScopeID++, MainScope);
         MainScope = 0;
         Scopes.push_back(scope);
-        ScopeStack.push(scope);
+        if(stackTop >= ScopeStack.size()) {
+            ScopeStack.push_back(scope);
+            stackTop++;
+        } else {
+            ScopeStack[stackTop++] = scope;
+        }
         return scope;
     }
     
     Scope* popScope() {
-        ScopeStack.pop();
-        return ScopeStack.top();
+        if(stackTop <= 1) {
+            printf("Error: No Elements In ScopeStack!\n");
+            return nullptr;
+        }
+        stackTop--;
+        return ScopeStack[stackTop - 1];
+    }
+
+    Operand* findOperand(std::string name) {
+        for(auto it = ScopeStack.rbegin(); it != ScopeStack.rend(); it++) {
+            if((*it)->sym.find(name) != (*it)->sym.end()) return (*it)->sym[name];
+        }
+        return nullptr;
+    }
+
+    void insertOperand(std::string name, Operand* operand) {
+        if(stackTop == 0) {
+            printf("Error: No Elements In ScopeStack!\n");
+            return;
+        }
+        ScopeStack[stackTop - 1]->sym[name] = operand;
     }
 
     void dump() {
