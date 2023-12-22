@@ -57,17 +57,15 @@ void DeadStatementElimination::compute_def_and_use(CFGProcedure* proc)
         int blk_idx = blk->get_index();
         for(auto& tac: blk->get_tac_list())
         {
-            switch(tac->getOpcode())
+            switch(tac->getDUType())
             {
                 //无定值
-                case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL:
-                case Type::STORE: case Type::WRITE: case Type::WRL: case Type::PARAM:
-                case Type::ENTER: case Type::RET: case Type::NOP: case Type::ENTRYPC:
+                case DUType::NDEF:
                     use(m_use[blk_idx], m_def[blk_idx], tac->getSrc0());
                     use(m_use[blk_idx], m_def[blk_idx], tac->getSrc1());
                     break;
                 //MOVE对src1定值的特殊处理
-                case Type::MOVE:
+                case DUType::DDEF:
                     use(m_use[blk_idx], m_def[blk_idx], tac->getSrc0());
                     def(m_def[blk_idx], tac->getSrc1());
                     def(m_def[blk_idx], tac->getDest());
@@ -158,6 +156,26 @@ void DeadStatementElimination::eliminate(Tac** tac)
     (*tac)->rebindSrc1(nullptr);
 }
 
+void DeadStatementElimination::remove_nop(CFGBlock* blk)
+{
+    for(auto it = blk->get_tac_list().begin(); it != blk->get_tac_list().end(); it++)
+    {
+        Tac* now_tac = *it;
+        if(now_tac->getOpcode() == Type::NOP)
+        {
+            Tac* pre_tac = now_tac->getPreTac();
+            Tac* suc_tac = now_tac->getSucTac();
+            suc_tac->setPreTac(pre_tac);
+            pre_tac->setSucTac(suc_tac);
+            now_tac->setPreTac(nullptr);
+            now_tac->setSucTac(nullptr);
+            it = blk->get_tac_list().erase(it);
+            it--;
+            delete(now_tac);
+        }
+    }
+}
+
 int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
 {
     int eliminate_cnt = 0;
@@ -169,12 +187,10 @@ int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
         for(auto it = blk->get_tac_list().rbegin(); it != blk->get_tac_list().rend(); it++)
         {
             Tac* tac = *it;
-            switch(tac->getOpcode())
+            switch(tac->getDUType())
             {
                 //无定值
-                case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL:
-                case Type::STORE: case Type::WRITE: case Type::WRL: case Type::PARAM:
-                case Type::ENTER: case Type::RET: case Type::NOP: case Type::ENTRYPC:
+                case DUType::NDEF:
                     //更新live_out
                     if(tac->getSrc0() != nullptr && tac->getSrc0()->oper_id >= 0)
                         live_out.set(tac->getSrc0()->oper_id);
@@ -182,37 +198,44 @@ int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
                         live_out.set(tac->getSrc1()->oper_id);
                     break;
                 //MOVE对src1定值的特殊处理
-                case Type::MOVE:
+                case DUType::DDEF:
                     if(check(tac->getSrc1(), live_out) && check(tac->getDest(), live_out))
                     {
                         eliminate(&tac);
                         eliminate_cnt++;
                     }
-                    //更新live_out
-                    if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
-                        live_out.reset(tac->getDest()->oper_id);
-                    if(tac->getSrc1() != nullptr && tac->getSrc1()->oper_id >= 0)
-                        live_out.reset(tac->getSrc1()->oper_id);
-                    if(tac->getSrc0() != nullptr && tac->getSrc0()->oper_id >= 0)
-                        live_out.set(tac->getSrc0()->oper_id);
+                    else
+                    {
+                        //更新live_out
+                        if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
+                            live_out.reset(tac->getDest()->oper_id);
+                        if(tac->getSrc1() != nullptr && tac->getSrc1()->oper_id >= 0)
+                            live_out.reset(tac->getSrc1()->oper_id);
+                        if(tac->getSrc0() != nullptr && tac->getSrc0()->oper_id >= 0)
+                            live_out.set(tac->getSrc0()->oper_id);
+                    }
                     break;
                 default:
-                    if(check(tac->getDest(), live_out))
+                    // READ作特殊处理，即使READ的定值未使用也不可以删除
+                    if(check(tac->getDest(), live_out) && tac->getOpcode() != Type::READ)
                     {
                         eliminate(&tac);
                         eliminate_cnt++;
                     }
-                    //更新live_out
-                    if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
-                        live_out.reset(tac->getDest()->oper_id);
-                    if(tac->getSrc0() != nullptr && tac->getSrc0()->oper_id >= 0)
-                        live_out.set(tac->getSrc0()->oper_id);
-                    if(tac->getSrc1() != nullptr && tac->getSrc1()->oper_id >= 0)
-                        live_out.set(tac->getSrc1()->oper_id);
-                    
+                    else
+                    {
+                        //更新live_out
+                        if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
+                            live_out.reset(tac->getDest()->oper_id);
+                        if(tac->getSrc0() != nullptr && tac->getSrc0()->oper_id >= 0)
+                            live_out.set(tac->getSrc0()->oper_id);
+                        if(tac->getSrc1() != nullptr && tac->getSrc1()->oper_id >= 0)
+                            live_out.set(tac->getSrc1()->oper_id);
+                    }
                     break;
             } 
         }
+        remove_nop(blk);
     }
     return eliminate_cnt;
 }

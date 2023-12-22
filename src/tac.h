@@ -52,6 +52,12 @@ typedef enum {
     LABEL
 } OperandType;
 
+typedef enum {
+    NDEF,   //无定值
+    SDEF,   //单定值
+    DDEF    //双定值
+} DUType;
+
 class Operand {
 public:
     int oper_id{-1};
@@ -242,6 +248,18 @@ public:
         return this->sucTac;
     }
 
+    Tac* getPreTac() {
+        return this->preTac;
+    }
+
+    void setSucTac(Tac* suc_tac) {
+        this->sucTac = suc_tac;
+    }
+
+    void setPreTac(Tac* pre_tac) {
+        this->preTac = pre_tac;
+    }
+
     void dump() {
         printf("\tinstr %ld: %s ", TacID, opname.c_str());
         if(src0 != nullptr) src0->dump();
@@ -252,6 +270,27 @@ public:
 
     void toC() {
         ;
+    }
+
+    //定值类型的判断，用于在到达定值和活跃变量分析中进行分类处理
+    DUType getDUType() {
+        switch(this->opcode)
+        {
+            //无定值
+            case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL:
+            case Type::STORE: case Type::WRITE: case Type::WRL: case Type::PARAM:
+            case Type::ENTER: case Type::RET: case Type::NOP: case Type::ENTRYPC:
+                return NDEF;
+                break;
+            //MOVE有两个定值
+            case Type::MOVE:
+                return DDEF;
+                break;
+            //单一的对dest定值
+            default:
+                return SDEF;
+                break;
+        } 
     }
 };
 

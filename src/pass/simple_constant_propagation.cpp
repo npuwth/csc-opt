@@ -33,15 +33,14 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc)
     {
         for(auto& tac: blk->get_tac_list())
         {
-            switch(tac->getOpcode())
+            switch(tac->getDUType())
             {  
                 //无定值
-                case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL:
-                case Type::STORE: case Type::WRITE: case Type::WRL: case Type::PARAM:
-                case Type::ENTER: case Type::RET: case Type::NOP: case Type::ENTRYPC:
+                case DUType::NDEF:
                     break;
                 //MOVE对src1定值的特殊处理
-                case Type::MOVE:
+                case DUType::DDEF:
+                    assert(tac->getOpcode() == Type::MOVE);
                     if(tac->getSrc0()->getType() == OperandType::CONST)
                         m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac, true, ((Constant*)(tac->getSrc0()))->num));
                     else

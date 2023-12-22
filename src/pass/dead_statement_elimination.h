@@ -22,6 +22,7 @@ private:
     // 死代码删除
     bool check(Operand* oper, BitMap& live_out);
     void eliminate(Tac** tac);
+    void remove_nop(CFGBlock* blk);
     int eliminate_dead_statement(CFGProcedure* proc);
 public:
     DeadStatementElimination(CFGProgram* i_cfg) :Pass(i_cfg) {}
