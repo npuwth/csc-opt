@@ -16,6 +16,13 @@ private:
     void initial_symbols(CFGProcedure* proc);
     void compute_def_and_use(CFGProcedure* proc);
     void compute_in_and_out(CFGProcedure* proc);
+    void def(BitMap& def, Operand* oper);
+    void use(BitMap& use, BitMap& def, Operand* oper);
+    void print_living_variable();
+    // 死代码删除
+    bool check(Operand* oper, BitMap& live_out);
+    void eliminate(Tac** tac);
+    int eliminate_dead_statement(CFGProcedure* proc);
 public:
     DeadStatementElimination(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();

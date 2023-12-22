@@ -4,11 +4,15 @@ void SimpleConstantPropagation::run() {
     std::cout << "running SCP pass..." << std::endl;
     for(auto& proc: *m_cfg)
     {
-        initial_definitions(proc);
-        compute_gen_and_kill(proc);
-        compute_in_and_out(proc);
-        // print_reaching_definition();
-        propagate_constant(proc);
+        while(true)
+        {
+            initial_definitions(proc);
+            compute_gen_and_kill(proc);
+            compute_in_and_out(proc);
+            // print_reaching_definition();
+            if(propagate_constant(proc) == 0)
+                break;
+        }
     }
 }
 
@@ -19,6 +23,11 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc)
     m_kill.clear();
     m_in.clear();
     m_out.clear();
+    for(auto& kv: proc->get_sym())
+    {
+        Operand* symbol = kv.second;
+        symbol->def_id.clear();
+    }
     int def_id = 0;
     for(auto& blk: proc->get_blocks())
     {
@@ -192,17 +201,18 @@ bool SimpleConstantPropagation::check(Operand* oper, BitMap& def_in, int* defini
 void SimpleConstantPropagation::replace(Tac* tac, Operand* oper, int definition_id)
 {
     assert(definition_id >= 0);
-    // std::cout << "instr " << tac->getTacID() << ": replace ";
-    // oper->dump();
-    // std::cout << " with d" << m_definitions[definition_id].id << ": const " << m_definitions[definition_id].const_value << std::endl;
+    std::cout << "instr " << tac->getTacID() << ": replace ";
+    oper->dump();
+    std::cout << " with d" << m_definitions[definition_id].id << ": const " << m_definitions[definition_id].const_value << std::endl;
     if(tac->getSrc0() == oper)
         tac->rebindSrc0(new Constant(m_definitions[definition_id].const_value));
     else if(tac->getSrc1() == oper)
         tac->rebindSrc1(new Constant(m_definitions[definition_id].const_value));
 }
 
-void SimpleConstantPropagation::propagate_constant(CFGProcedure* proc)
+int SimpleConstantPropagation::propagate_constant(CFGProcedure* proc)
 {
+    int replace_cnt = 0;
     for(auto& blk: proc->get_blocks())
     {
         int blk_idx = blk->get_index();
@@ -212,14 +222,21 @@ void SimpleConstantPropagation::propagate_constant(CFGProcedure* proc)
             int definition_id = -1;
             //判断常量传播
             if(check(tac->getSrc0(), def_in, &definition_id))
+            {
                 replace(tac, tac->getSrc0(), definition_id);
+                replace_cnt++;
+            }
             if(tac->getOpcode() != Type::MOVE)
                 if(check(tac->getSrc1(), def_in, &definition_id))
+                {
                     replace(tac, tac->getSrc1(), definition_id);
+                    replace_cnt++;
+                }
             //按指令更新def_in
             gen(def_in, tac, tac->getDest());
             if(tac->getOpcode() == Type::MOVE)
                 gen(def_in, tac, tac->getSrc1());
         }
     }
+    return replace_cnt;
 }

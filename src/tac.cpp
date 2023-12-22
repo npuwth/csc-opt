@@ -155,6 +155,7 @@ void parse_tac_file() {
                 printf("Error: Opcode Not Recogonized!\n");
                 return;
         }
+        pg.insertOperand("(" + std::to_string(tac->getTacID()) + ")", tac->getDest());
         // tac->dump();
     }
     // printf("TAC File Parsed Successfully.\n");

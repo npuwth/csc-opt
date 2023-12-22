@@ -216,6 +216,11 @@ public:
         return this->src1;
     }
 
+    void rebindOp(Type new_opcode, std::string new_opname) {
+        this->opcode = new_opcode;
+        this->opname = new_opname;
+    }
+
     void rebindDest(Operand* new_dest) { 
         this->dest = new_dest; 
     }

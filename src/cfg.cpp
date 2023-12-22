@@ -32,11 +32,11 @@ void CFGBlock::add_tac_to_front(Tac* tac)
     m_tac_list.push_front(tac);
 }
 
-CFGProcedure* CFGProcedure::create_procedure()
+CFGProcedure* CFGProcedure::create_procedure(Scope* scope)
 {
     auto entry = new CFGBlock(-1);
     auto exit = new CFGBlock(-2);
-    return new CFGProcedure(0, entry, exit);
+    return new CFGProcedure(0, scope, entry, exit);
 }
 
 CFGProgram* CFGManager::gen_from_program(Program& prog)
@@ -49,9 +49,7 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
         if(scope->ScopeID == 0)
             continue;
         //每个Scope对应一个CFGProcedure，也即一个函数过程
-        CFGProcedure* cfg_proc = CFGProcedure::create_procedure();
-        if(scope->MainScope)
-            cfg_proc->set_main();
+        CFGProcedure* cfg_proc = CFGProcedure::create_procedure(scope);
         if(scope->Tac_head == nullptr) printf("Error: Empty Scope!\n");
         int first_tacid = scope->Tac_head->getTacID();
         int tacid = 0;

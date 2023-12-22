@@ -51,10 +51,12 @@ private:
     CFGBlock* m_exit;                            //表示虚拟的出口块，内部为空
     std::list<CFGBlock*> m_blocks;               //记录所有基本块
     bool m_main{false};                          //是否为main函数
+    std::unordered_map<std::string, Operand*> m_sym; //symbol table
 public:
-    CFGProcedure(int i_id, CFGBlock* i_entry=nullptr, CFGBlock* i_exit=nullptr):m_id(i_id),m_entry(i_entry),m_exit(i_exit){}
+    CFGProcedure(int i_id, Scope* i_scope, CFGBlock* i_entry=nullptr, CFGBlock* i_exit=nullptr):
+            m_id(i_id),m_entry(i_entry),m_exit(i_exit){m_main = i_scope->MainScope; m_sym = i_scope->sym;}
     ~CFGProcedure(){}
-    static CFGProcedure* create_procedure();
+    static CFGProcedure* create_procedure(Scope* scope);
     //set
     void set_id(int i_id) {m_id = i_id;}
     void set_entry(CFGBlock* i_entry) {m_entry = i_entry;}
@@ -67,6 +69,7 @@ public:
     CFGBlock* get_exit() {return m_exit;}
     bool is_main() {return m_main;}
     std::list<CFGBlock*>& get_blocks() {return m_blocks;}
+    std::unordered_map<std::string, Operand*>& get_sym() {return m_sym;}
 };
 
 using CFGProgram=std::list<CFGProcedure*>;

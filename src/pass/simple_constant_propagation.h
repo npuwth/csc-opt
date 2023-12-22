@@ -35,7 +35,7 @@ private:
     // 常量传播
     bool check(Operand* oper, BitMap& def_in, int* definition_id);
     void replace(Tac* tac, Operand* oper, int definition_id);
-    void propagate_constant(CFGProcedure* proc);
+    int propagate_constant(CFGProcedure* proc);
 public:
     SimpleConstantPropagation(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();
