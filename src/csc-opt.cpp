@@ -103,13 +103,9 @@ int main(int argc, char *argv[]) {
         if(opt == "c") {
             ;
         } else if(opt == "cfg") {
-            std::cout << "------simple CFG------" << std::endl;
+            std::cout << "------CFG------" << std::endl;
             CFGManager::dump_cfg_program(*cfg, std::cout);
-            std::cout << "----------------------" << std::endl;
-            //?
-            std::cout << "------complete CFG------" << std::endl;
-            // CFGManager::dump_cfg_program(*cfg, std::cout, true);
-            std::cout << "------------------------" << std::endl;
+            std::cout << "---------------" << std::endl;
         } else if(opt == "3addr") {
             std::cout << "------TAC------" << std::endl;
             pg.dump();

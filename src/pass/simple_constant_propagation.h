@@ -10,7 +10,10 @@ namespace SCP
         int id;
         Operand* dest;
         Tac* tac;
-        Definition(int id, Operand* dest, Tac* tac): id(id), dest(dest), tac(tac) {}
+        bool is_const;
+        dt_ulong const_value;
+        Definition(int id, Operand* dest, Tac* tac, bool is_const = false, dt_ulong const_value = 0):
+            id(id), dest(dest), tac(tac), is_const(is_const), const_value(const_value) {}
     };
 }
 // 简单常量传播
@@ -26,9 +29,13 @@ private:
     void initial_definitions(CFGProcedure* proc);
     void compute_gen_and_kill(CFGProcedure* proc);
     void compute_in_and_out(CFGProcedure* proc);
-    void gen(int blk_idx, Tac* tac, Operand* oper);
-    void kill(int blk_idx, Tac* tac, Operand* oper);
+    void gen(BitMap& gen, Tac* tac, Operand* oper);
+    void kill(BitMap& kill, Tac* tac, Operand* oper);
     void print_reaching_definition();
+    // 常量传播
+    bool check(Operand* oper, BitMap& def_in, int* definition_id);
+    void replace(Tac* tac, Operand* oper, int definition_id);
+    void propagate_constant(CFGProcedure* proc);
 public:
     SimpleConstantPropagation(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();

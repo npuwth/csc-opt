@@ -16,7 +16,7 @@ class CFGBlock //CFG基本块
 {
 private:
     int m_id{0};                            //基本块编号（用于输出）
-    int m_index{0};                         //基本块索引
+    int m_index{-1};                        //基本块索引
     std::multiset<CFGBlock*> m_anti_edge{}; //反向边
     std::array<CFGBlock*, 2> m_edge;        //正向边
     TacList m_tac_list;                     //指令列表

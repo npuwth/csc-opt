@@ -5,9 +5,10 @@ void SimpleConstantPropagation::run() {
     for(auto& proc: *m_cfg)
     {
         initial_definitions(proc);
-        // compute_gen_and_kill(proc);
-        // compute_in_and_out(proc);
-        print_reaching_definition();
+        compute_gen_and_kill(proc);
+        compute_in_and_out(proc);
+        // print_reaching_definition();
+        propagate_constant(proc);
     }
 }
 
@@ -32,9 +33,19 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc)
                     break;
                 //MOVE对src1定值的特殊处理
                 case Type::MOVE:
-                    m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac));
+                    if(tac->getSrc0()->getType() == OperandType::CONST)
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac, true, ((Constant*)(tac->getSrc0()))->num));
+                    else
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac));
                     tac->getSrc1()->def_id.push_back(def_id);
                     def_id++;
+                    if(tac->getSrc0()->getType() == OperandType::CONST)
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac, true, ((Constant*)(tac->getSrc0()))->num));
+                    else
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
+                    tac->getDest()->def_id.push_back(def_id);
+                    def_id++;
+                    break;
                 //对dest定值
                 default:
                     m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
@@ -44,7 +55,7 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc)
             }
         }
     }
-    int blk_num = proc->get_blocks().size();    //再加上ENTRY和EXIT这两个
+    int blk_num = proc->get_blocks().size();
     int def_num = m_definitions.size();
     for(int i = 0; i < blk_num; i++)
     {
@@ -62,21 +73,21 @@ void SimpleConstantPropagation::compute_gen_and_kill(CFGProcedure* proc)
         for(auto& tac: blk->get_tac_list())
         {
             // gen集
-            gen(blk_idx, tac, tac->getDest());
+            gen(m_gen[blk_idx], tac, tac->getDest());
             if(tac->getOpcode() == Type::MOVE)
-                gen(blk_idx, tac, tac->getSrc1());
+                gen(m_gen[blk_idx], tac, tac->getSrc1());
             // kill集
-            kill(blk_idx, tac, tac->getDest());
+            kill(m_kill[blk_idx], tac, tac->getDest());
             if(tac->getOpcode() == Type::MOVE)
-                kill(blk_idx, tac, tac->getSrc1());   
+                kill(m_kill[blk_idx], tac, tac->getSrc1());   
         }
     }
 }
 void SimpleConstantPropagation::compute_in_and_out(CFGProcedure* proc)
 {
-        std::cout << "2" << std::endl;
     std::queue<CFGBlock*> q;
-    q.push(proc->get_entry());
+    for(auto& block: proc->get_blocks())
+        q.push(block);
     while(!q.empty())
     {
         CFGBlock* current_block = q.front();
@@ -85,18 +96,19 @@ void SimpleConstantPropagation::compute_in_and_out(CFGProcedure* proc)
         BitMap old_value = m_out[blk_idx];
         // IN[B]=U(P,pred)OUT[P]
         for(auto it = current_block->get_pred().begin(); it != current_block->get_pred().end(); it++)
-            m_in[blk_idx] |= m_out[(*it)->get_index()];
+            if(*it != nullptr && (*it)->get_index() >= 0)
+                m_in[blk_idx] |= m_out[(*it)->get_index()];
         // OUT[B] = gen[B] U (IN[B] - kill[B])
         m_out[blk_idx] = m_gen[blk_idx] | (m_in[blk_idx] - m_kill[blk_idx]);
         old_value ^= m_out[blk_idx];    //异或判断是否相同
         if(!old_value.empty())
             for(auto it = current_block->get_succ().begin(); it != current_block->get_succ().end(); it++)
-                if(*it != nullptr)
+                if(*it != nullptr && (*it)->get_index() >= 0)
                     q.push(*it);
     }
 }
 
-void SimpleConstantPropagation::gen(int blk_idx, Tac* tac, Operand* oper)
+void SimpleConstantPropagation::gen(BitMap& gen, Tac* tac, Operand* oper)
 {
     for(auto& def_id: oper->def_id)
     {
@@ -104,22 +116,29 @@ void SimpleConstantPropagation::gen(int blk_idx, Tac* tac, Operand* oper)
         assert(m_definitions[def_id].dest == oper);
         //gen该定值
         if(m_definitions[def_id].tac == tac)
-            m_gen[blk_idx].set(def_id);
+        {
+            gen.set(def_id);
+            // std::cout << "gen set d" << def_id << std::endl;
+        }
         else
-            m_gen[blk_idx].reset(def_id);
+        {
+            gen.reset(def_id);
+            // std::cout << "gen reset d" << def_id << std::endl;
+        }
     }
 }
 
-void SimpleConstantPropagation::kill(int blk_idx, Tac* tac, Operand* oper)
+void SimpleConstantPropagation::kill(BitMap& kill, Tac* tac, Operand* oper)
 {
     for(auto& def_id: oper->def_id)
     {
         assert(m_definitions[def_id].id == def_id);
         assert(m_definitions[def_id].dest == oper);
         //kill所有除该定值以外的所有定值
-        if(m_definitions[def_id].tac != tac)
+        if(m_definitions[def_id].tac == tac)
             continue;
-        m_kill[blk_idx].set(def_id);
+        kill.set(def_id);
+        // std::cout << "kill d" << def_id << std::endl;
     }
 }
 
@@ -130,16 +149,77 @@ void SimpleConstantPropagation::print_reaching_definition()
     {
         std::cout << "d" << def.id << ": ";
         def.dest->dump();
-        std::cout << " at " << def.dest;
+        // std::cout << " at " << def.dest;
+        if(def.is_const)
+            std::cout << " Const " << def.const_value;
         def.tac->dump();
     }
     for(int i = 0; i < m_gen.size(); i++)
     {
-        // std::cout << "block[" << i << "]" << std::endl;
-        // std::cout << "  gen  = " << m_gen[i].get_string() << std::endl;
-        // std::cout << "  kill = " << m_kill[i].get_string() << std::endl;
-        // std::cout << "  in   = " << m_in[i].get_string() << std::endl;
-        // std::cout << "  out  = " << m_out[i].get_string() << std::endl;
+        std::cout << "block[" << i << "]" << std::endl;
+        std::cout << "  gen  = " << m_gen[i].get_string() << std::endl;
+        std::cout << "  kill = " << m_kill[i].get_string() << std::endl;
+        std::cout << "  in   = " << m_in[i].get_string() << std::endl;
+        std::cout << "  out  = " << m_out[i].get_string() << std::endl;
     }
     std::cout << "-------------------------" << std::endl;
+}
+
+bool SimpleConstantPropagation::check(Operand* oper, BitMap& def_in, int* definition_id)
+{
+    int def_num = 0;
+    int sole_def_id = -1;
+    if(oper == nullptr)
+        return false;
+    for(auto& def_id: oper->def_id)
+        if(def_in.test(def_id))
+        {
+            def_num++;
+            sole_def_id = def_id;
+        }
+    if(def_num == 1)    //只有唯一一个定值到达这里
+    {
+        assert(sole_def_id >= 0);
+        if(m_definitions[sole_def_id].is_const) //该定值为常量
+        {
+            *definition_id = sole_def_id;
+            return true;
+        }
+    }
+    return false;
+}
+
+void SimpleConstantPropagation::replace(Tac* tac, Operand* oper, int definition_id)
+{
+    assert(definition_id >= 0);
+    // std::cout << "instr " << tac->getTacID() << ": replace ";
+    // oper->dump();
+    // std::cout << " with d" << m_definitions[definition_id].id << ": const " << m_definitions[definition_id].const_value << std::endl;
+    if(tac->getSrc0() == oper)
+        tac->rebindSrc0(new Constant(m_definitions[definition_id].const_value));
+    else if(tac->getSrc1() == oper)
+        tac->rebindSrc1(new Constant(m_definitions[definition_id].const_value));
+}
+
+void SimpleConstantPropagation::propagate_constant(CFGProcedure* proc)
+{
+    for(auto& blk: proc->get_blocks())
+    {
+        int blk_idx = blk->get_index();
+        BitMap def_in = BitMap(m_in[blk_idx]);
+        for(auto& tac: blk->get_tac_list())
+        {
+            int definition_id = -1;
+            //判断常量传播
+            if(check(tac->getSrc0(), def_in, &definition_id))
+                replace(tac, tac->getSrc0(), definition_id);
+            if(tac->getOpcode() != Type::MOVE)
+                if(check(tac->getSrc1(), def_in, &definition_id))
+                    replace(tac, tac->getSrc1(), definition_id);
+            //按指令更新def_in
+            gen(def_in, tac, tac->getDest());
+            if(tac->getOpcode() == Type::MOVE)
+                gen(def_in, tac, tac->getSrc1());
+        }
+    }
 }

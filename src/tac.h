@@ -44,12 +44,22 @@ typedef enum {
     NOP
 } Type;
 
+typedef enum {
+    CONST,
+    ADDR,
+    REG,
+    VAR,
+    LABEL
+} OperandType;
+
 class Operand {
 public:
+    int oper_id{-1};
     std::vector<int> def_id;    // 到达定值分析中对应的定值列表
     Operand() {def_id.clear();}
     virtual void dump() = 0;
     virtual void toC() = 0;
+    virtual OperandType getType() = 0;
 };
 
 class Constant: public Operand { //Constants
@@ -66,6 +76,10 @@ public:
 
     void toC () {
         ;
+    }
+
+    OperandType getType() {
+        return OperandType::CONST;
     }
 };
 
@@ -90,6 +104,10 @@ public:
     void toC () {
         ;
     }
+
+    OperandType getType() {
+        return OperandType::ADDR;
+    }
 };
 
 class Register: public Operand { //Register_names
@@ -106,6 +124,10 @@ public:
 
     void toC () {
         ;
+    }
+
+    OperandType getType() {
+        return OperandType::REG;
     }
 };
 
@@ -126,6 +148,10 @@ public:
     void toC () {
         ;
     }
+
+    OperandType getType() {
+        return OperandType::VAR;
+    }
 };
 
 class Label: public Operand { //Instruction_labels
@@ -142,6 +168,10 @@ public:
 
     void toC () {
         ;
+    }
+
+    OperandType getType() {
+        return OperandType::LABEL;
     }
 };
 
@@ -184,6 +214,18 @@ public:
 
     Operand* getSrc1() {
         return this->src1;
+    }
+
+    void rebindDest(Operand* new_dest) { 
+        this->dest = new_dest; 
+    }
+
+    void rebindSrc0(Operand* new_src0) { 
+        this->src0 = new_src0; 
+    }
+
+    void rebindSrc1(Operand* new_src1) { 
+        this->src1 = new_src1; 
     }
 
     void connectTac(Tac *tac) {
