@@ -60,17 +60,20 @@ int main(int argc, char *argv[]) {
 
     if(config.i_filename.empty()) {
         printf("Error: No Source File Specified!\n");
+        std::cout << cli << "\n";
         return 1;
     } else {
         // fp = fopen(argv[1], "r");
         if(freopen(config.i_filename.c_str(), "r", stdin) == nullptr) {
             printf("Error: Cannot Open Source File!\n");
+            std::cout << cli << "\n";
             return 1;
         }
     }
     if(!config.o_filename.empty())
         if(freopen(config.o_filename.c_str(), "w", stdout) == nullptr) {
             printf("Error: Cannot Open Dest File!\n");
+            std::cout << cli << "\n";
             return 1;
         }
 

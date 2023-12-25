@@ -1,16 +1,14 @@
 #include "pass.h"
-#include "simple_constant_propagation.h"
-#include "dead_statement_elimination.h"
-#include "convert_ssa.h"
-#include "revert_ssa.h"
-#include "common_subexpression_elimination.h"
-#include "loop_invariant_code_motion.h"
+#include "SCP.h"
+#include "DSE.h"
+#include "SSA.h"
+#include "RSSA.h"
+#include "CSE.h"
+#include "LICM.h"
 
-void Optimizer::add_pass(PassType pass_type)
-{
+void Optimizer::add_pass(PassType pass_type) {
     Pass *pass;
-    switch(pass_type)
-    {
+    switch(pass_type) {
         case PassType::SimpleConstantPropagation:
             pass = new SimpleConstantPropagation(m_cfg);
             break;
@@ -36,8 +34,7 @@ void Optimizer::add_pass(PassType pass_type)
     m_passes.push_back(pass);
 }
 
-void Optimizer::run_pass()
-{
+void Optimizer::run_pass() {
     for(auto& pass: m_passes)
         pass->run();
     m_passes.clear();

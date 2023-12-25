@@ -1,51 +1,43 @@
 #include "cfg.h"
 
-void CFGBlock::erase_from_anti_edge(CFGBlock* target)
-{
+void CFGBlock::erase_from_anti_edge(CFGBlock* target) {
     if (auto iter = m_anti_edge.find(target); iter != m_anti_edge.end()) {
         m_anti_edge.erase(iter);
     }
 }
 
-void CFGBlock::set_edge(int index,CFGBlock* to)
-{
+void CFGBlock::set_edge(int index, CFGBlock* to) {
     m_edge[index] = to;
     if(to != nullptr)
         to->m_anti_edge.insert(this);
 }
 
-void CFGBlock::delete_edge(int index)
-{
+void CFGBlock::delete_edge(int index) {
     CFGBlock* target = m_edge[index];
     if(target != nullptr)
         target->erase_from_anti_edge(this);
     m_edge[index] = nullptr;
 }
 
-void CFGBlock::add_tac(Tac* tac)
-{
+void CFGBlock::add_tac(Tac* tac) {
     m_tac_list.push_back(tac);
 }
 
-void CFGBlock::add_tac_to_front(Tac* tac)
-{
+void CFGBlock::add_tac_to_front(Tac* tac) {
     m_tac_list.push_front(tac);
 }
 
-CFGProcedure* CFGProcedure::create_procedure(Scope* scope)
-{
+CFGProcedure* CFGProcedure::create_procedure(Scope* scope) {
     auto entry = new CFGBlock(-1);
     auto exit = new CFGBlock(-2);
     return new CFGProcedure(0, scope, entry, exit);
 }
 
-CFGProgram* CFGManager::gen_from_program(Program& prog)
-{
+CFGProgram* CFGManager::gen_from_program(Program& prog) {
     CFGProgram* cfg_prog = new CFGProgram;
     std::unordered_map<int, CFGBlock*> id_to_block;
     //TODO:遍历Program生存控制流图
-    for(auto& scope: prog.Scopes)
-    {
+    for(auto& scope: prog.Scopes) {
         if(scope->ScopeID == 0)
             continue;
         //每个Scope对应一个CFGProcedure，也即一个函数过程
@@ -55,16 +47,13 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
         int tacid = 0;
         //第一遍遍历tac，确定基本块开头并创建基本块
         Tac *tac = scope->Tac_head;
-        for(;tac != nullptr; tac = tac->getSucTac())
-        {
-            switch(tac->getOpcode())
-            {
+        for(;tac != nullptr; tac = tac->getSucTac()) {
+            switch(tac->getOpcode()) {
                 case Type::ENTER:
                     tacid = tac->getTacID();
                     assert(first_tacid == tacid);
                     //第一条指令，创建基本块
-                    if(id_to_block[tacid] == nullptr)
-                    {
+                    if(id_to_block[tacid] == nullptr) {
                         CFGBlock* new_block = new CFGBlock(tacid);
                         id_to_block[tacid] = new_block;
                     }
@@ -75,15 +64,13 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
                     else
                         tacid = ((Label*)(tac->getSrc1()))->instr_pos;
                     //跳转指令的目的，创建基本块
-                    if(id_to_block[tacid] == nullptr)
-                    {
+                    if(id_to_block[tacid] == nullptr) {
                         CFGBlock* new_block = new CFGBlock(tacid);
                         id_to_block[tacid] = new_block;
                     }
                     tacid = tac->getTacID() + 1;
                     //跳转指令的后继，创建基本块
-                    if(id_to_block[tacid] == nullptr)
-                    {
+                    if(id_to_block[tacid] == nullptr) {
                         CFGBlock* new_block = new CFGBlock(tacid);
                         id_to_block[tacid] = new_block;
                     }
@@ -97,17 +84,13 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
         CFGBlock* current_block = id_to_block[first_tacid];
         //第二遍遍历tac，向基本块中添加指令并连接基本块
         tac = scope->Tac_head;
-        for(;tac != nullptr; tac = tac->getSucTac())
-        {
+        for(;tac != nullptr; tac = tac->getSucTac()) {
             int succ_tacid = 0;
             tacid = tac->getTacID();
-            if(id_to_block[tacid] != nullptr)   //切换当前基本块
-            {
+            if(id_to_block[tacid] != nullptr) {  //切换当前基本块
                 Tac* last_tac = current_block->get_tac_list().back();
-                if(last_tac != nullptr)
-                {
-                    switch(last_tac->getOpcode())
-                    {
+                if(last_tac != nullptr) {
+                    switch(last_tac->getOpcode()) {
                         case Type::BR: case Type::CALL: case Type::BLBC: case Type::BLBS: case Type::RET: break;
                         default:
                             current_block->set_edge(0, id_to_block[tacid]);
@@ -160,12 +143,10 @@ CFGProgram* CFGManager::gen_from_program(Program& prog)
     return cfg_prog;
 }
 
-void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all)
-{
+void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all) {
     if(block->get_id() < 0)
         return; //不输出entry和exit
-    if(show_all)
-    {
+    if(show_all) {
         os << "Basic Block: " << block->get_id() << std::endl;
         os << "---TACs:" << std::endl;
         for(auto& tac: block->get_tac_list())
@@ -182,13 +163,12 @@ void CFGManager::dump_cfg_block(CFGBlock* block,std::ostream& os, bool show_all)
         os << std::endl;
 }
 
-void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all)
-{
+void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all) {
     // bfs序输出基本块
     std::set<CFGBlock*> is_printed;
     std::queue<CFGBlock*> q;
     q.push(entry);
-    while(!q.empty()){
+    while(!q.empty()) {
         CFGBlock* now = q.front();
         q.pop();
         dump_cfg_block(now, os, show_all);
@@ -201,16 +181,14 @@ void CFGManager::dump_cfg(CFGBlock* entry,std::ostream& os, bool show_all)
     }
 }
 
-void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool show_all)
-{
+void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool show_all) {
     os << "Function: " << proc->get_id();
     if(show_all && proc->is_main())
         os << " main" << std::endl;
     os << std::endl;
     if(show_all)
         dump_cfg(proc->get_entry(), os, show_all);
-    else
-    {
+    else {
         os << "Basic Blocks:";
         for(auto& block: proc->get_blocks())
             std::cout << " " << block->get_id();
@@ -221,15 +199,13 @@ void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool sh
     }
 }
 
-void CFGManager::dump_cfg_program(CFGProgram& prog,std::ostream& os, bool show_all)
-{
+void CFGManager::dump_cfg_program(CFGProgram& prog,std::ostream& os, bool show_all) {
     for(auto& proc: prog)
         dump_cfg_procedure(proc, os, show_all);
 
 }
 
-void CFGManager::cfg_error()
-{
-    std::cout << "[Error] block pointer is null!" << std::endl;
+void CFGManager::cfg_error() {
+    std::cout << "Error: Block Pointer Is Null!" << std::endl;
     exit(255);
 }

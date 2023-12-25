@@ -1,4 +1,4 @@
-#include "convert_ssa.h"
+#include "SSA.h"
 
 void ConvertSSA::run() {
     std::cout << "running SSA pass..." << std::endl;

@@ -1,23 +1,20 @@
-#include "dead_statement_elimination.h"
+#include "DSE.h"
 
 void DeadStatementElimination::run() {
-    std::cout << "running DSE pass..." << std::endl;
-    for(auto& proc: *m_cfg)
-    {
-        while(true)
-        {
+    std::cout << "INFO: Running DSE Pass..." << std::endl;
+    for(auto& proc: *m_cfg) {
+        while(true) {
             initial_symbols(proc);
             compute_def_and_use(proc);
             compute_in_and_out(proc);
             // print_living_variable();
-            if(eliminate_dead_statement(proc) == 0)
+            if(eliminate_dead_statement(proc) == 0) //到达不动点
                 break;
         }
     }
 }
 
-void DeadStatementElimination::initial_symbols(CFGProcedure* proc)
-{
+void DeadStatementElimination::initial_symbols(CFGProcedure* proc) {
     m_symbols.clear();
     m_def.clear();
     m_use.clear();
@@ -25,11 +22,9 @@ void DeadStatementElimination::initial_symbols(CFGProcedure* proc)
     m_out.clear();
 
     int sym_idx = 0;
-    for(auto& kv: proc->get_sym())
-    {
+    for(auto& kv: proc->get_sym()) {
         Operand* symbol = kv.second;
-        if(symbol->getType() == OperandType::REG || symbol->getType() == OperandType::VAR)
-        {
+        if(symbol->getType() == OperandType::REG || symbol->getType() == OperandType::VAR) {
             // std::cout << "add ";
             // symbol->dump();
             // std::cout << std::endl;
@@ -40,8 +35,7 @@ void DeadStatementElimination::initial_symbols(CFGProcedure* proc)
     }
     int blk_num = proc->get_blocks().size();
     int sym_num = m_symbols.size();
-    for(int i = 0; i < blk_num; i++)
-    {
+    for(int i = 0; i < blk_num; i++) {
         m_def.push_back(BitMap(sym_num));
         m_use.push_back(BitMap(sym_num));
         m_in.push_back(BitMap(sym_num));
