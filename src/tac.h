@@ -41,7 +41,8 @@ typedef enum {
     ENTER, //denote function begin
     RET,   //denote function return
     ENTRYPC, //denote main function
-    NOP
+    NOP,
+    PHI
 } Type;
 
 typedef enum {
@@ -381,6 +382,7 @@ public:
         mp["ret"] = RET;
         mp["entrypc"] = ENTRYPC;
         mp["nop"] = NOP;
+        mp["phi"] = PHI;
     }
 
     int get_opcode(std::string op) {

@@ -4,9 +4,8 @@
 #include "bitmap.h"
 #include <cassert>
 
-namespace SCP
-{
-    struct Definition{
+namespace SCP {
+    struct Definition {
         int id;
         Operand* dest;
         Tac* tac;
@@ -17,15 +16,14 @@ namespace SCP
     };
 }
 // 简单常量传播
-class SimpleConstantPropagation final :public Pass
-{
+class SimpleConstantPropagation final :public Pass {
 private:
     std::vector<SCP::Definition> m_definitions;
     std::vector<BitMap> m_gen;
     std::vector<BitMap> m_kill;
     std::vector<BitMap> m_in;
     std::vector<BitMap> m_out;
-    // 到达定值
+    // 到达定值分析
     void initial_definitions(CFGProcedure* proc);
     void compute_gen_and_kill(CFGProcedure* proc);
     void compute_in_and_out(CFGProcedure* proc);

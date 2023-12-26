@@ -81,6 +81,8 @@ CFGProgram* CFGManager::gen_from_program(Program& prog) {
         if(id_to_block[first_tacid] == nullptr)
             cfg_error();
         cfg_proc->get_entry()->set_edge(0, id_to_block[first_tacid]);
+        cfg_proc->add_block(cfg_proc->get_entry());
+        cfg_proc->add_block(cfg_proc->get_exit());
         CFGBlock* current_block = id_to_block[first_tacid];
         //第二遍遍历tac，向基本块中添加指令并连接基本块
         tac = scope->Tac_head;

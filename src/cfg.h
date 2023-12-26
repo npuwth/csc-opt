@@ -18,6 +18,8 @@ private:
     std::multiset<CFGBlock*> m_anti_edge;   //反向边，入边（数目不限）
     std::array<CFGBlock*, 2> m_edge;        //正向边，出边（至多两个）
     TacList m_tac_list;                     //指令列表
+    std::set<int> m_dominator;              //存放该基本块的支配者的索引
+    int m_imm_dominator = -2;               //直接支配者的索引
 
     void erase_from_anti_edge(CFGBlock* target); //从反向边表中删除指定边
 public:
@@ -30,21 +32,25 @@ public:
     void add_tac(Tac* tac);
     void add_tac_to_front(Tac* tac);
     //set
-    void set_edge(int index,CFGBlock* to);   //设置边的函数，同时也会在目标节点添加反向边
+    void set_edge(int index, CFGBlock* to);   //设置边的函数，同时也会在目标节点添加反向边
     void delete_edge(int index);             //从邻接表中删除某条边,同时也会将目标节点中的反向边删除
-    void set_id(int id) {m_id = id;}
-    void set_index(int index) {m_index = index;}
+    void set_id(int id) { m_id = id;}
+    void set_index(int index) { m_index = index;}
+    void add_dominator(int index) { m_dominator.insert(index); }
+    void set_imm_dominator(int index) { m_imm_dominator = index; }
     //get
     int get_index() { return m_index; }
     int get_id() { return m_id; }
     TacList& get_tac_list() { return m_tac_list; }
-    CFGBlock* get_succ(int index){return m_edge[index];}                          //获取后继节点
-    std::array<CFGBlock*, 2> get_succ(){return m_edge;}                           //获取后继节点列表
-    std::multiset<CFGBlock*>& get_pred(){ return m_anti_edge; }                   //获取前驱节点列表
-    int in_degree(){ return m_anti_edge.size(); }                                 //入度
-    int out_degree(){return (m_edge[0]!=nullptr?1:0)+(m_edge[1]!=nullptr?1:0);}   //出度
-    bool is_entry(){ return m_anti_edge.empty(); }                                //是否为入口
-    bool is_exit(){return m_edge[0]==nullptr&&m_edge[1]==nullptr;}                //是否为出口
+    CFGBlock* get_succ(int index){ return m_edge[index];}                          //获取后继节点
+    std::array<CFGBlock*, 2> get_succ(){ return m_edge;}                           //获取后继节点列表
+    std::multiset<CFGBlock*>& get_pred(){ return m_anti_edge; }                    //获取前驱节点列表
+    int in_degree(){ return m_anti_edge.size(); }                                  //入度
+    int out_degree(){ return (m_edge[0]!=nullptr?1:0)+(m_edge[1]!=nullptr?1:0);}   //出度
+    bool is_entry(){ return m_anti_edge.empty(); }                                 //是否为入口
+    bool is_exit(){ return m_edge[0]==nullptr&&m_edge[1]==nullptr;}                //是否为出口
+    std::set<int> get_dominator() { return m_dominator; }
+    int get_imm_dominator() { return m_imm_dominator; }
 };
 
 class CFGProcedure { //CFG过程，对应一个Scope
@@ -52,7 +58,7 @@ private:
     int m_id = 0;                     //过程编号
     CFGBlock* m_entry;                //表示虚拟的入口块，内部为空
     CFGBlock* m_exit;                 //表示虚拟的出口块，内部为空
-    std::list<CFGBlock*> m_blocks;    //记录所有基本块
+    std::list<CFGBlock*> m_blocks;    //记录所有基本块, 不包含entry和exit
     bool m_main = false;              //是否为main函数
     std::unordered_map<std::string, Operand*> m_sym; //Scope中的symbol table
 public:

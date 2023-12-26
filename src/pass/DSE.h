@@ -4,15 +4,14 @@
 #include "bitmap.h"
 
 // 死代码删除
-class DeadStatementElimination final :public Pass
-{
+class DeadStatementElimination final :public Pass {
 private:
     std::vector<Operand*> m_symbols;
     std::vector<BitMap> m_def;
     std::vector<BitMap> m_use;
     std::vector<BitMap> m_in;
     std::vector<BitMap> m_out;
-    // 活跃变量
+    // 活跃变量分析
     void initial_symbols(CFGProcedure* proc);
     void compute_def_and_use(CFGProcedure* proc);
     void compute_in_and_out(CFGProcedure* proc);

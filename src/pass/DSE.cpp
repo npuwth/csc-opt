@@ -44,15 +44,11 @@ void DeadStatementElimination::initial_symbols(CFGProcedure* proc) {
 
 }
 
-void DeadStatementElimination::compute_def_and_use(CFGProcedure* proc)
-{
-    for(auto& blk: proc->get_blocks())
-    {
+void DeadStatementElimination::compute_def_and_use(CFGProcedure* proc) {
+    for(auto& blk: proc->get_blocks()) {
         int blk_idx = blk->get_index();
-        for(auto& tac: blk->get_tac_list())
-        {
-            switch(tac->getDUType())
-            {
+        for(auto& tac: blk->get_tac_list()) {
+            switch(tac->getDUType()) {
                 //无定值
                 case DUType::NDEF:
                     use(m_use[blk_idx], m_def[blk_idx], tac->getSrc0());
@@ -74,15 +70,13 @@ void DeadStatementElimination::compute_def_and_use(CFGProcedure* proc)
     }
 }
 
-void DeadStatementElimination::compute_in_and_out(CFGProcedure* proc)
-{
+void DeadStatementElimination::compute_in_and_out(CFGProcedure* proc) {
     std::queue<CFGBlock*> q;
     for(auto it = proc->get_blocks().rbegin(); it != proc->get_blocks().rend(); it++)
         q.push(*it);
     // for(auto& block: proc->get_blocks())
     //     q.push(block);
-    while(!q.empty())
-    {
+    while(!q.empty()) {
         CFGBlock* current_block = q.front();
         q.pop();
         int blk_idx = current_block->get_index();
@@ -99,32 +93,26 @@ void DeadStatementElimination::compute_in_and_out(CFGProcedure* proc)
                 if(*it != nullptr && (*it)->get_index() >= 0)
                     q.push(*it);
     }
-
 }
 
-void DeadStatementElimination::def(BitMap& def, Operand* oper)
-{
+void DeadStatementElimination::def(BitMap& def, Operand* oper) {
     if(oper != nullptr && oper->oper_id >= 0)
         def.set(oper->oper_id);
 }
 
-void DeadStatementElimination::use(BitMap& use, BitMap& def, Operand* oper)
-{
+void DeadStatementElimination::use(BitMap& use, BitMap& def, Operand* oper) {
     if(oper != nullptr && oper->oper_id >=0 && !def.test(oper->oper_id))
         use.set(oper->oper_id);
 }
 
-void DeadStatementElimination::print_living_variable()
-{
+void DeadStatementElimination::print_living_variable() {
     std::cout << "-----Living Variable-----" << std::endl;
-    for(auto& sym: m_symbols)
-    {
+    for(auto& sym: m_symbols) {
         std::cout << "symbol " << sym->oper_id << ": ";
         sym->dump();
         std::cout << std::endl;
     }
-    for(int i = 0; i < m_def.size(); i++)
-    {
+    for(int i = 0; i < m_def.size(); i++) {
         std::cout << "block[" << i << "]" << std::endl;
         std::cout << "  def  = " << m_def[i].get_string() << std::endl;
         std::cout << "  use  = " << m_use[i].get_string() << std::endl;
@@ -134,15 +122,13 @@ void DeadStatementElimination::print_living_variable()
     std::cout << "-------------------------" << std::endl;
 }
 
-bool DeadStatementElimination::check(Operand* oper, BitMap& live_out)
-{
+bool DeadStatementElimination::check(Operand* oper, BitMap& live_out) {
     if(!live_out.test(oper->oper_id))   //不活跃则可以删除
         return true;
     return false;
 }
 
-void DeadStatementElimination::eliminate(Tac** tac)
-{
+void DeadStatementElimination::eliminate(Tac** tac) {
     std::cout << "eliminate ";
     (*tac)->dump();
     (*tac)->rebindOp(Type::NOP, "nop");
@@ -150,13 +136,10 @@ void DeadStatementElimination::eliminate(Tac** tac)
     (*tac)->rebindSrc1(nullptr);
 }
 
-void DeadStatementElimination::remove_nop(CFGBlock* blk)
-{
-    for(auto it = blk->get_tac_list().begin(); it != blk->get_tac_list().end(); it++)
-    {
+void DeadStatementElimination::remove_nop(CFGBlock* blk) {
+    for(auto it = blk->get_tac_list().begin(); it != blk->get_tac_list().end(); it++) {
         Tac* now_tac = *it;
-        if(now_tac->getOpcode() == Type::NOP)
-        {
+        if(now_tac->getOpcode() == Type::NOP) {
             Tac* pre_tac = now_tac->getPreTac();
             Tac* suc_tac = now_tac->getSucTac();
             suc_tac->setPreTac(pre_tac);
@@ -170,19 +153,15 @@ void DeadStatementElimination::remove_nop(CFGBlock* blk)
     }
 }
 
-int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
-{
+int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc) {
     int eliminate_cnt = 0;
-    for(auto& blk: proc->get_blocks())
-    {
+    for(auto& blk: proc->get_blocks()) {
         int blk_idx = blk->get_index();
         BitMap live_out = BitMap(m_out[blk_idx]);
         //逆序遍历指令
-        for(auto it = blk->get_tac_list().rbegin(); it != blk->get_tac_list().rend(); it++)
-        {
+        for(auto it = blk->get_tac_list().rbegin(); it != blk->get_tac_list().rend(); it++) {
             Tac* tac = *it;
-            switch(tac->getDUType())
-            {
+            switch(tac->getDUType()) {
                 //无定值
                 case DUType::NDEF:
                     //更新live_out
@@ -193,13 +172,11 @@ int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
                     break;
                 //MOVE对src1定值的特殊处理
                 case DUType::DDEF:
-                    if(check(tac->getSrc1(), live_out) && check(tac->getDest(), live_out))
-                    {
+                    if(check(tac->getSrc1(), live_out) && check(tac->getDest(), live_out)) {
                         eliminate(&tac);
                         eliminate_cnt++;
                     }
-                    else
-                    {
+                    else {
                         //更新live_out
                         if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
                             live_out.reset(tac->getDest()->oper_id);
@@ -211,13 +188,11 @@ int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc)
                     break;
                 default:
                     // READ作特殊处理，即使READ的定值未使用也不可以删除
-                    if(check(tac->getDest(), live_out) && tac->getOpcode() != Type::READ)
-                    {
+                    if(check(tac->getDest(), live_out) && tac->getOpcode() != Type::READ) {
                         eliminate(&tac);
                         eliminate_cnt++;
                     }
-                    else
-                    {
+                    else {
                         //更新live_out
                         if(tac->getDest() != nullptr && tac->getDest()->oper_id >= 0)
                             live_out.reset(tac->getDest()->oper_id);
