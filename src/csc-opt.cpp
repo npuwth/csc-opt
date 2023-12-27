@@ -12,6 +12,8 @@ struct Config {
     std::vector<std::string> optimization;
     std::string i_filename;
     std::string o_filename;
+    bool debug;
+    int test_num;
 } config;
 
 std::vector<std::string> split_string(const std::string& s, char seperator) {
@@ -32,6 +34,7 @@ int main(int argc, char *argv[]) {
     std::string b_options;
     std::string o_options;
     bool showhelp = false;
+    config.test_num = 1;
     auto cli = lyra::help(showhelp)
         | lyra::opt(b_options, "backend")
             ["--backend"]
@@ -39,6 +42,12 @@ int main(int argc, char *argv[]) {
         | lyra::opt(o_options, "optimization")
             ["--opt"]
             ("which optimizations to use?")
+        | lyra::opt(config.test_num, "testnum")
+            ["-n"]["--testnum"]
+            ("how many times to test?")
+        | lyra::opt(config.debug)
+            ["-d"]["--debug"]
+            ("whether print debug information?")
         | lyra::opt(config.o_filename, "destFile")
             ["-o"]["--output"]
             ("which dest file to use?")
@@ -57,6 +66,8 @@ int main(int argc, char *argv[]) {
     }
     config.backend = split_string(b_options, ',');
     config.optimization = split_string(o_options, ',');
+    PASS_DEBUG = config.debug;
+    TEST_NUM = config.test_num;
 
     if(config.i_filename.empty()) {
         printf("Error: No Source File Specified!\n");
@@ -106,13 +117,9 @@ int main(int argc, char *argv[]) {
         if(opt == "c") {
             pg.toC();
         } else if(opt == "cfg") {
-            std::cout << "------CFG------" << std::endl;
             CFGManager::dump_cfg_program(*cfg, std::cout);
-            std::cout << "---------------" << std::endl;
         } else if(opt == "3addr") {
-            std::cout << "------TAC------" << std::endl;
             pg.dump();
-            std::cout << "---------------" << std::endl;
         } else if(opt == "rep") { //report
             ;
         } else if(opt == "ssa") {

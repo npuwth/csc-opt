@@ -8,6 +8,7 @@
 // FILE *fp;
 Program pg;
 char ch, chars[CSSidlen];
+int TEST_NUM = 1;
 
 dt_ulong Number() { //Constants范围：uint64_t
     dt_ulong ans = 0;
@@ -207,21 +208,25 @@ void Scope::toC() {
     else
         func_name = "func" + std::to_string(func_id);
     std::cout << "void " << func_name << "() {" << std::endl;
-    //声明局部变量
-    // for(auto& kv: sym)
-    //     if(kv.second->getType() == OperandType::VAR){
-    //         std::cout << "long ";
-    //         kv.second->toC();
-    //         std::cout << ";" << std::endl;
-    //     }
+
     //翻译tac
+    if(MainScope) {
+        std::cout << "time_t startsec = time(0);" << std::endl;
+        std::cout << "for(int i = 0; i < " << TEST_NUM << "; i++) {" << std::endl;
+    }
     for(Tac* tac = Tac_head; tac != nullptr; tac = tac->getSucTac())
         tac->toC();
+    if(MainScope) {
+        std::cout << "FP--;}" << std::endl;
+        std::cout << "time_t finisec = time(0);" << std::endl;
+        std::cout << "fprintf( stderr, \"time: %ld\\n\", finisec - startsec );" << std::endl;
+    }
     std::cout << "}" << std::endl;
 }
 
 void Program::toC() {
     std::cout << "#include <stdio.h>" << std::endl;
+    std::cout << "#include <time.h>" << std::endl;
     std::cout << "#define WriteLine() printf(\"\\n\");" << std::endl;
     std::cout << "#define WriteLong(x) printf(\" %lld\", (long)x);" << std::endl;
     std::cout << "#define ReadLong(a) if (fscanf(stdin, \"%lld\", &a) != 1) a = 0;" << std::endl;

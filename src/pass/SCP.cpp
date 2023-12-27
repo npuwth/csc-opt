@@ -1,7 +1,9 @@
 #include "SCP.h"
 
 void SimpleConstantPropagation::run() {
-    std::cout << "INFO: Running SCP Pass..." << std::endl;
+    if(PASS_DEBUG) {
+        std::cout << "INFO: Running SCP Pass..." << std::endl;
+    }
     for(auto& proc: *m_cfg) {
         while(true) {
             initial_definitions(proc);
@@ -12,6 +14,26 @@ void SimpleConstantPropagation::run() {
                 break;
         }
     }
+}
+
+dt_ulong SimpleConstantPropagation::calculate_const(Tac* tac) {
+    dt_ulong result = 0;
+    dt_long operand0 = (tac->getSrc0() != nullptr) ? ((Constant*)(tac->getSrc0()))->num : 0;
+    dt_long operand1 = (tac->getSrc1() != nullptr) ? ((Constant*)(tac->getSrc1()))->num : 0;
+    switch(tac->getOpcode()) {
+        case Type::ADD:     result = operand0 + operand1; break;
+        case Type::SUB:     result = operand0 - operand1; break;
+        case Type::MUL:     result = operand0 * operand1; break;
+        case Type::DIV:     result = operand0 / operand1; break;
+        case Type::MOD:     result = operand0 % operand1; break;
+        case Type::NEG:     result = - operand0; break;
+        case Type::CMPEQ:   result = operand0 == operand1; break;
+        case Type::CMPLE:   result = operand0 <= operand1; break;
+        case Type::CMPLT:   result = operand0 < operand1; break;
+        case Type::MOVE:    result = operand0; break;
+        default:break;
+    }
+    return result;
 }
 
 void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc) {
@@ -35,13 +57,13 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc) {
                 case DUType::DDEF:
                     assert(tac->getOpcode() == Type::MOVE);
                     if(tac->getSrc0()->getType() == OperandType::CONST)
-                        m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac, true, ((Constant*)(tac->getSrc0()))->num));
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac, true, calculate_const(tac)));
                     else
                         m_definitions.push_back(SCP::Definition(def_id, tac->getSrc1(), tac));
                     tac->getSrc1()->def_id.push_back(def_id);
                     def_id++;
                     if(tac->getSrc0()->getType() == OperandType::CONST)
-                        m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac, true, ((Constant*)(tac->getSrc0()))->num));
+                        m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac, true, calculate_const(tac)));
                     else
                         m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
                     tac->getDest()->def_id.push_back(def_id);
@@ -49,9 +71,29 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc) {
                     break;
                 //对dest定值
                 default:
-                    m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
-                    tac->getDest()->def_id.push_back(def_id);
-                    def_id++;
+                    switch(tac->getOpcode()) {
+                        case Type::ADD: case Type::SUB: case Type::MUL: case Type::DIV: case Type::MOD: case Type::CMPEQ: case Type::CMPLE: case Type::CMPLT:
+                            if(tac->getSrc0()->getType() == OperandType::CONST && tac->getSrc1()->getType() == OperandType::CONST)
+                                m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac, true, calculate_const(tac)));
+                            else
+                                m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
+                            tac->getDest()->def_id.push_back(def_id);
+                            def_id++;
+                            break;
+                        case Type::NEG:
+                            if(tac->getSrc0()->getType() == OperandType::CONST)
+                                m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac, true, calculate_const(tac)));
+                            else
+                                m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
+                            tac->getDest()->def_id.push_back(def_id);
+                            def_id++;
+                            break;
+                        default:
+                            m_definitions.push_back(SCP::Definition(def_id, tac->getDest(), tac));
+                            tac->getDest()->def_id.push_back(def_id);
+                            def_id++;
+                            break;
+                    }
                     break;
             }
         }
@@ -175,9 +217,11 @@ bool SimpleConstantPropagation::check(Operand* oper, BitMap& def_in, int* defini
 
 void SimpleConstantPropagation::replace(Tac* tac, Operand* oper, int definition_id) {
     assert(definition_id >= 0);
-    std::cout << "instr " << tac->getTacID() << ": replace ";
-    oper->dump();
-    std::cout << " with d" << m_definitions[definition_id].id << ": const " << m_definitions[definition_id].const_value << std::endl;
+    if(PASS_DEBUG) {
+        std::cout << "instr " << tac->getTacID() << ": replace ";
+        oper->dump();
+        std::cout << " with d" << m_definitions[definition_id].id << ": const " << m_definitions[definition_id].const_value << std::endl;
+    }
     if(tac->getSrc0() == oper)
         tac->rebindSrc0(new Constant(m_definitions[definition_id].const_value));
     else if(tac->getSrc1() == oper)

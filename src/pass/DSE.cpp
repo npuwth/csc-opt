@@ -1,7 +1,9 @@
 #include "DSE.h"
 
 void DeadStatementElimination::run() {
-    std::cout << "INFO: Running DSE Pass..." << std::endl;
+    if(PASS_DEBUG) {
+        std::cout << "INFO: Running DSE Pass..." << std::endl;
+    }
     for(auto& proc: *m_cfg) {
         while(true) {
             initial_symbols(proc);
@@ -129,8 +131,10 @@ bool DeadStatementElimination::check(Operand* oper, BitMap& live_out) {
 }
 
 void DeadStatementElimination::eliminate(Tac** tac) {
-    std::cout << "eliminate ";
-    (*tac)->dump();
+    if(PASS_DEBUG) {
+        std::cout << "eliminate ";
+        (*tac)->dump();
+    }
     (*tac)->rebindOp(Type::NOP, "nop");
     (*tac)->rebindSrc0(nullptr);
     (*tac)->rebindSrc1(nullptr);

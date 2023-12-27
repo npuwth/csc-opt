@@ -12,6 +12,8 @@ typedef uint64_t dt_ulong;
 #define TYPE_FP 1 //fp address
 #define TYPE_GP 2 //gp address
 
+extern int TEST_NUM;
+
 typedef enum {
 //Arithmetic
     ADD,
