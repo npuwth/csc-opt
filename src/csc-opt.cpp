@@ -28,7 +28,7 @@ std::vector<std::string> split_string(const std::string& s, char seperator) {
 
 int main(int argc, char *argv[]) {
     
-    // 参数解析
+    //1. 参数解析
     std::string b_options;
     std::string o_options;
     bool showhelp = false;
@@ -77,13 +77,13 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-    // 前端
+    //2. 前端解析tac
     parse_tac_file();
 
-    // 中间表示cfg
+    //3. 中间表示cfg
     CFGProgram* cfg = CFGManager::gen_from_program(pg);
 
-    // 分析与优化
+    //4. 分析 & 优化
     Optimizer optimizer = Optimizer(cfg);
     for(auto& opt: config.optimization) {
         if(opt == "scp") {
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     // optimizer.add_pass(PassType::RevertSSA); //TODO
     optimizer.run_pass();
 
-    // 后端
+    //5. 后端输出
     for(auto& opt: config.backend) {
         if(opt == "c") {
             ;

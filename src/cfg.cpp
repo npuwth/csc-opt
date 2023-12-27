@@ -193,7 +193,8 @@ void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool sh
     else {
         os << "Basic Blocks:";
         for(auto& block: proc->get_blocks())
-            std::cout << " " << block->get_id();
+            if(block->get_id() >= 0)
+                std::cout << " " << block->get_id();
         os << std::endl;
         os << "CFG:" << std::endl;
         for(auto& block: proc->get_blocks())
