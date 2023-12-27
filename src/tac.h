@@ -114,8 +114,8 @@ public:
     void toC () {
         if(type == TYPE_FP) printf("(long)FP");
         else if(type == TYPE_GP) printf("(long)GP");
-        else if(addr < 0) printf("(%ld)", addr/8);//8字节对齐
-        else printf("%ld", addr/8);
+        else if(addr < 0) printf("(%ld)", addr);
+        else printf("%ld", addr);
     }
 
     OperandType getType() {
