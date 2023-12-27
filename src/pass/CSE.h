@@ -3,8 +3,7 @@
 #include "pass.h"
 
 // 公共子表达式删除
-class CommonSubexpressionElimination final :public Pass
-{
+class CommonSubexpressionElimination final :public Pass {
 public:
     CommonSubexpressionElimination(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();

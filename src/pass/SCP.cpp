@@ -2,7 +2,7 @@
 
 void SimpleConstantPropagation::run() {
     std::cout << "INFO: Running SCP Pass..." << std::endl;
-    for(auto& proc: *m_cfg) {
+    for(auto& proc: m_cfg->pl) {
         while(true) {
             initial_definitions(proc);
             compute_gen_and_kill(proc);

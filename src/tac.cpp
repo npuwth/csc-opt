@@ -104,6 +104,7 @@ void parse_tac_file() {
     while(std::cin >> c) { //"instr"
         // printf("%s\n", c.c_str());
         scanf("%ld", &TacID);
+        pg.maxTacID = TacID;
         // printf("%ld\n", TacID);
         ch = getc(stdin); //':'
         // printf("%c\n", ch);

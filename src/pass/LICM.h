@@ -3,8 +3,7 @@
 #include "pass.h"
 
 // 循环不变代码移动
-class LoopInvariantCodeMotion final :public Pass
-{
+class LoopInvariantCodeMotion final :public Pass {
 public:
     LoopInvariantCodeMotion(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();

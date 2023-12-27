@@ -1,6 +1,6 @@
 #include "CSE.h"
 
 void CommonSubexpressionElimination::run() {
-    std::cout << "running SCE pass..." << std::endl;
+    std::cout << "INFO: Running CSE Pass..." << std::endl;
 
 }

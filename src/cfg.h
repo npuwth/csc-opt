@@ -21,6 +21,7 @@ private:
     TacList m_tac_list;                     //指令列表
     // std::set<int> m_dominator;              //存放该基本块的支配者的索引
     CFGBlock* m_idominator = nullptr;       //直接支配节点
+    std::set<CFGBlock*> m_domfront;         //支配边界
 
     void erase_from_anti_edge(CFGBlock* target); //从反向边表中删除指定边
 public:
@@ -39,6 +40,7 @@ public:
     void set_index(int index) { m_index = index;}
     // void add_dominator(int index) { m_dominator.insert(index); }
     void set_idominator(CFGBlock* idom) { m_idominator = idom; }
+    void add_domfront(CFGBlock* runner) { m_domfront.insert(runner); }
     //get
     int get_index() { return m_index; }
     int get_id() { return m_id; }
@@ -52,6 +54,7 @@ public:
     bool is_exit(){ return m_edge[0]==nullptr&&m_edge[1]==nullptr;}                //是否为出口
     // std::set<int> get_dominator() { return m_dominator; }
     CFGBlock* get_idominator() { return m_idominator; }
+    std::set<CFGBlock*>& get_domfront() { return m_domfront; }
 };
 
 class CFGProcedure { //CFG过程，对应一个Scope
@@ -88,7 +91,13 @@ public:
     std::unordered_map<std::string, Operand*>& get_sym() { return m_sym;}
 };
 
-using CFGProgram = std::list<CFGProcedure*>;
+class CFGProgram {
+public:
+    std::list<CFGProcedure*> pl;
+    dt_long maxTacID;
+    CFGProgram(){}
+    ~CFGProgram(){}
+};
 
 class CFGManager {
 private:

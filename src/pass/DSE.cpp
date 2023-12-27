@@ -2,7 +2,7 @@
 
 void DeadStatementElimination::run() {
     std::cout << "INFO: Running DSE Pass..." << std::endl;
-    for(auto& proc: *m_cfg) {
+    for(auto& proc: m_cfg->pl) {
         while(true) {
             initial_symbols(proc);
             compute_def_and_use(proc);

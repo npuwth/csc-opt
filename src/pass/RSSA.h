@@ -3,8 +3,7 @@
 #include "pass.h"
 
 // 从SSA形式转回原形式
-class RevertSSA final :public Pass
-{
+class RevertSSA final :public Pass {
 public:
     RevertSSA(CFGProgram* i_cfg) :Pass(i_cfg) {}
     void run();

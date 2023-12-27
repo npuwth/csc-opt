@@ -1,5 +1,5 @@
 #include "LICM.h"
 
 void LoopInvariantCodeMotion::run() {
-    std::cout << "running LICM pass..." << std::endl;
+    std::cout << "Running LICM Pass..." << std::endl;
 }

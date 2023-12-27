@@ -159,6 +159,14 @@ public:
     OperandType getType() {
         return OperandType::VAR;
     }
+
+    dt_long getOffset() {
+        return offset;
+    }
+
+    std::string getName() {
+        return name;
+    }
 };
 
 class Label: public Operand { //Instruction_labels
@@ -352,6 +360,7 @@ public:
     std::unordered_map<std::string, int> mp;
     dt_ulong ScopeID = 0;
     bool MainScope = 0;
+    dt_long maxTacID;
 
     Program() {
         Scopes.clear();

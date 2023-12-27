@@ -7,12 +7,19 @@ class ConvertSSA final :public Pass {
 private:
     std::vector<int> postOrderID; // idx -> postOrder
     std::vector<int> reversePostOrder; // reversePostOrder -> idx
+    std::vector<bool> visited;
+    dt_long cmaxTacID;
+    int varID = 0;
+    std::unordered_map<Variable*, int> varMap;
+    std::vector<int> varCount;
+    std::vector<std::stack<Variable*>> varStack;
 private:
     void compute_reversePostOrder(CFGProcedure* proc);
     void compute_immediate_dominator(CFGProcedure* proc);
     void compute_dominance_frontiers(CFGProcedure* proc);
     void insert_phi_functions(CFGProcedure* proc);
-    void rename_variables(CFGProcedure* proc);
+    Variable* gen_name(Variable* var);
+    void rename_variables(CFGBlock* blk);
     CFGBlock* intersect(CFGBlock* x, CFGBlock* y);
 public:
     ConvertSSA(CFGProgram* i_cfg) :Pass(i_cfg) {}

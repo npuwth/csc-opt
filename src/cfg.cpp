@@ -35,6 +35,7 @@ CFGProcedure* CFGProcedure::create_procedure(Scope* scope) {
 
 CFGProgram* CFGManager::gen_from_program(Program& prog) {
     CFGProgram* cfg_prog = new CFGProgram;
+    cfg_prog->maxTacID = prog.maxTacID;
     std::unordered_map<int, CFGBlock*> id_to_block;
     //TODO:遍历Program生存控制流图
     for(auto& scope: prog.Scopes) {
@@ -140,7 +141,7 @@ CFGProgram* CFGManager::gen_from_program(Program& prog) {
             }
             current_block->add_tac(tac);
         }
-        cfg_prog->push_back(cfg_proc);
+        cfg_prog->pl.push_back(cfg_proc);
     }
     return cfg_prog;
 }
@@ -203,7 +204,7 @@ void CFGManager::dump_cfg_procedure(CFGProcedure* proc,std::ostream& os, bool sh
 }
 
 void CFGManager::dump_cfg_program(CFGProgram& prog,std::ostream& os, bool show_all) {
-    for(auto& proc: prog)
+    for(auto& proc: prog.pl)
         dump_cfg_procedure(proc, os, show_all);
 
 }
