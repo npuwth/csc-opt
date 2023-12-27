@@ -31,6 +31,7 @@ private:
     void kill(BitMap& kill, Tac* tac, Operand* oper);
     void print_reaching_definition();
     // 常量传播
+    dt_ulong calculate_const(Tac* tac);
     bool check(Operand* oper, BitMap& def_in, int* definition_id);
     void replace(Tac* tac, Operand* oper, int definition_id);
     int propagate_constant(CFGProcedure* proc);

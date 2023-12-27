@@ -6,6 +6,8 @@
 #include "CSE.h"
 #include "LICM.h"
 
+bool PASS_DEBUG = false;
+
 void Optimizer::add_pass(PassType pass_type) {
     Pass *pass;
     switch(pass_type) {

@@ -3,6 +3,8 @@
 #include "tac.h"
 #include "cfg.h"
 
+extern bool PASS_DEBUG;
+
 //优化类型
 enum class PassType: int {
     SimpleConstantPropagation,              //简单常量传播

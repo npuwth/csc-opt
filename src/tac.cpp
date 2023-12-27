@@ -8,6 +8,7 @@
 // FILE *fp;
 Program pg;
 char ch, chars[CSSidlen];
+int TEST_NUM = 1;
 
 dt_ulong Number() { //Constants范围：uint64_t
     dt_ulong ans = 0;
@@ -161,4 +162,78 @@ void parse_tac_file() {
     }
     // printf("TAC File Parsed Successfully.\n");
     return;
+}
+
+void Tac::toC() {
+    static int param_cnt = 0;
+    std::cout << "\tL" << TacID << ": ";
+    if(getDUType() == SDEF || getDUType() == DDEF) {
+        std::cout << "long ";
+        dest->toC();
+        if(opcode == READ) std::cout << "; ";
+        else std::cout << " = ";
+    }
+    switch(opcode){
+        case ADD:       src0->toC(); std::cout << " + "; src1->toC(); break;
+        case SUB:       src0->toC(); std::cout << " - "; src1->toC(); break;
+        case MUL:       src0->toC(); std::cout << " * "; src1->toC(); break;
+        case DIV:       src0->toC(); std::cout << " / "; src1->toC(); break;
+        case MOD:       src0->toC(); std::cout << " % "; src1->toC(); break;
+        case NEG:       std::cout << " - "; src0->toC(); break;
+        case CMPEQ:     std::cout << "("; src0->toC(); std::cout << " == "; src1->toC();std::cout << ")";  break;
+        case CMPLE:     std::cout << "("; src0->toC(); std::cout << " <= "; src1->toC();std::cout << ")";  break;
+        case CMPLT:     std::cout << "("; src0->toC(); std::cout << " < "; src1->toC();std::cout << ")";  break;
+        case BR:        std::cout << "goto L"; src0->toC(); break;
+        case BLBC:      std::cout << "if(!"; src0->toC(); std::cout << ") goto L"; src1->toC(); break;
+        case BLBS:      std::cout << "if("; src0->toC(); std::cout << ") goto L"; src1->toC(); break;
+        case CALL:      std::cout << "FP -= " << param_cnt <<"; FP--; func"; src0->toC(); std::cout << "()"; param_cnt = 0; break;
+        case LOAD:      std::cout << "*((long*)"; src0->toC(); std::cout << ")"; break;
+        case STORE:     std::cout << "*((long*)"; src1->toC(); std::cout << ") = "; src0->toC(); break;
+        case MOVE:      src1->toC(); std::cout << " = "; src0->toC(); break;
+        case READ:      std::cout << "ReadLong("; dest->toC(); std::cout << ")";  break;
+        case WRITE:     std::cout << "WriteLong("; src0->toC(); std::cout << ")"; break;
+        case WRL:       std::cout << "WriteLine()"; break;
+        case PARAM:     std::cout << "*(FP - " << param_cnt << ") = "; src0->toC(); param_cnt++; break;
+        case RET:       std::cout << "FP++; FP += " << (((Constant*)src0)->num)/8; break;
+        default:break;
+    }
+    std::cout << ";" << std::endl;
+}
+
+void Scope::toC() {
+    if(ScopeID == 0)
+        return;
+    std::string func_name = "";
+    if(MainScope)
+        func_name = "main";
+    else
+        func_name = "func" + std::to_string(func_id);
+    std::cout << "void " << func_name << "() {" << std::endl;
+
+    //翻译tac
+    if(MainScope) {
+        std::cout << "time_t startsec = time(0);" << std::endl;
+        std::cout << "for(int i = 0; i < " << TEST_NUM << "; i++) {" << std::endl;
+    }
+    for(Tac* tac = Tac_head; tac != nullptr; tac = tac->getSucTac())
+        tac->toC();
+    if(MainScope) {
+        std::cout << "FP--;}" << std::endl;
+        std::cout << "time_t finisec = time(0);" << std::endl;
+        std::cout << "fprintf( stderr, \"time: %ld\\n\", finisec - startsec );" << std::endl;
+    }
+    std::cout << "}" << std::endl;
+}
+
+void Program::toC() {
+    std::cout << "#include <stdio.h>" << std::endl;
+    std::cout << "#include <time.h>" << std::endl;
+    std::cout << "#define WriteLine() printf(\"\\n\");" << std::endl;
+    std::cout << "#define WriteLong(x) printf(\" %lld\", (long)x);" << std::endl;
+    std::cout << "#define ReadLong(a) if (fscanf(stdin, \"%lld\", &a) != 1) a = 0;" << std::endl;
+    std::cout << "#define long long long" << std::endl;
+    std::cout << "long GP[1048576];" << std::endl;  // 2^20 * 8Byte = 8MB
+    std::cout << "long* FP = GP + 1048500;" << std::endl;
+    for(auto& scope: Scopes)
+        scope->toC();
 }
