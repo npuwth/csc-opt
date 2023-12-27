@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     // 后端
     for(auto& opt: config.backend) {
         if(opt == "c") {
-            ;
+            pg.toC();
         } else if(opt == "cfg") {
             std::cout << "------CFG------" << std::endl;
             CFGManager::dump_cfg_program(*cfg, std::cout);

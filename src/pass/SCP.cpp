@@ -143,7 +143,7 @@ void SimpleConstantPropagation::print_reaching_definition() {
             std::cout << " Const " << def.const_value;
         def.tac->dump();
     }
-    for(int i = 0; i < m_gen.size(); i++) {
+    for(int i = 0; i < (int)(m_gen.size()); i++) {
         std::cout << "block[" << i << "]" << std::endl;
         std::cout << "  gen  = " << m_gen[i].get_string() << std::endl;
         std::cout << "  kill = " << m_kill[i].get_string() << std::endl;

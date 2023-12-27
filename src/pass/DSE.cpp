@@ -112,7 +112,7 @@ void DeadStatementElimination::print_living_variable() {
         sym->dump();
         std::cout << std::endl;
     }
-    for(int i = 0; i < m_def.size(); i++) {
+    for(int i = 0; i < (int)(m_def.size()); i++) {
         std::cout << "block[" << i << "]" << std::endl;
         std::cout << "  def  = " << m_def[i].get_string() << std::endl;
         std::cout << "  use  = " << m_use[i].get_string() << std::endl;

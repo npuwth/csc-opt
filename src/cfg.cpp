@@ -132,6 +132,7 @@ CFGProgram* CFGManager::gen_from_program(Program& prog) {
                     break;
                 case Type::ENTER://过程进入
                     cfg_proc->set_id(tacid);
+                    scope->func_id = tacid;
                     break;
                 case Type::RET://过程返回
                     current_block->set_edge(0, cfg_proc->get_exit());

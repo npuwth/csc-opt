@@ -82,7 +82,10 @@ public:
     }
 
     void toC () {
-        ;
+        if(num < 0)
+            printf("(%ld)", num);
+        else
+            printf("%ld", num);
     }
 
     OperandType getType() {
@@ -109,7 +112,10 @@ public:
     }
 
     void toC () {
-        ;
+        if(type == TYPE_FP) printf("FP");
+        else if(type == TYPE_GP) printf("GP");
+        else if(addr < 0) printf("(%ld)", addr/8);//8字节对齐
+        else printf("%ld", addr/8);
     }
 
     OperandType getType() {
@@ -130,7 +136,7 @@ public:
     }
 
     void toC () {
-        ;
+        printf("r%ld", reg_index);
     }
 
     OperandType getType() {
@@ -153,7 +159,11 @@ public:
     }
 
     void toC () {
-        ;
+        // printf("%s", name.c_str());
+        if(offset < 0)
+            printf("*(FP + (%ld))", offset/8);
+        else
+            printf("*(FP + %ld)", offset/8);
     }
 
     OperandType getType() {
@@ -174,7 +184,7 @@ public:
     }
 
     void toC () {
-        ;
+        printf("%ld", instr_pos);
     }
 
     OperandType getType() {
@@ -258,7 +268,8 @@ public:
     }
 
     void setPreTac(Tac* pre_tac) {
-        this->preTac = pre_tac;
+ 
+                   this->preTac = pre_tac;
     }
 
     void dump() {
@@ -269,9 +280,7 @@ public:
         printf("\n");
     }
 
-    void toC() {
-        ;
-    }
+    void toC();
 
     //定值类型的判断，用于在到达定值和活跃变量分析中进行分类处理
     DUType getDUType() {
@@ -305,6 +314,7 @@ public:
     Tac *Tac_cur;
     bool MainScope = 0; //main function
     std::unordered_map<std::string, Operand*> sym; //symbol table
+    int func_id = -1; //转C时的函数名编号
 
     Scope(dt_ulong ScopeID, bool MainScope) {
         // Tacs.clear();
@@ -339,9 +349,7 @@ public:
         printf("\n");
     }
 
-    void toC() {
-        ;
-    }
+    void toC();
 };
 
 class Program {
@@ -436,9 +444,7 @@ public:
         }
     }
     
-    void toC() {
-        ;
-    }
+    void toC();
 };
 
 void parse_tac_file();
