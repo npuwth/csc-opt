@@ -99,7 +99,7 @@ void SimpleConstantPropagation::initial_definitions(CFGProcedure* proc) {
         }
     }
     int blk_num = proc->get_blocks().size();
-    int def_num = m_definitions.size();
+    int def_num = m_definitions.size(); //该proc中存在多少个定值
     for(int i = 0; i < blk_num; i++) {
         m_gen.push_back(BitMap(def_num));
         m_kill.push_back(BitMap(def_num));

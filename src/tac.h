@@ -63,9 +63,9 @@ typedef enum {
 
 class Operand {
 public:
-    int oper_id{-1};
+    int oper_id = -1;
     std::vector<int> def_id;    // 到达定值分析中对应的定值列表
-    Operand() {def_id.clear();}
+    Operand() { def_id.clear(); }
     virtual void dump() = 0;
     virtual void toC() = 0;
     virtual OperandType getType() = 0;
@@ -150,14 +150,20 @@ class Variable: public Operand { //Local_variables
 public:
     std::string name;
     dt_long offset = 0;
+    bool isPhi = false;
 
-    Variable(std::string name, dt_long offset) {
+    Variable(std::string name, dt_long offset, bool isPhi=false) {
         this->name = name;
         this->offset = offset;
+        this->isPhi = isPhi;
     }
 
     void dump() {
-        printf("%s@%ld", name.c_str(), offset);
+        if(!isPhi) {
+            printf("%s@%ld", name.c_str(), offset);
+        } else {
+            printf("%s", name.c_str());
+        }
     }
 
     void toC () {
@@ -200,6 +206,10 @@ public:
     OperandType getType() {
         return OperandType::LABEL;
     }
+
+    void setPos(dt_ulong pos) {
+        instr_pos = pos;
+    }
 };
 
 class Tac {
@@ -208,8 +218,9 @@ private:
     Type opcode = ADD;
     std::string opname;
     Operand *dest = nullptr;
-    Operand *src0 = nullptr;
-    Operand *src1 = nullptr;
+    // Operand *src0 = nullptr;
+    // Operand *src1 = nullptr;
+    std::vector<Operand*> src;
     Tac *preTac;
     Tac *sucTac;
 public:
@@ -218,8 +229,10 @@ public:
         this->opcode = Type(opcode);
         this->opname = opname;
         // printf("judge: %d\n", src0 == nullptr);
-        this->src0   = src0;
-        this->src1   = src1;
+        this->src.clear();
+        this->src.push_back(src0);
+        if(opcode != Type::PHI)
+            this->src.push_back(src1);
         this->dest   = new Register(TacID);
     };
 
@@ -236,11 +249,19 @@ public:
     }
 
     Operand* getSrc0() {
-        return this->src0;
+        return this->src[0];
     }
 
     Operand* getSrc1() {
-        return this->src1;
+        return this->src[1];
+    }
+
+    std::vector<Operand*> getSrc() {
+        return this->src;
+    }
+
+    void addSrc(Operand* x) {
+        this->src.push_back(x);
     }
 
     void rebindOp(Type new_opcode, std::string new_opname) {
@@ -253,11 +274,11 @@ public:
     }
 
     void rebindSrc0(Operand* new_src0) { 
-        this->src0 = new_src0; 
+        this->src[0] = new_src0; 
     }
 
     void rebindSrc1(Operand* new_src1) { 
-        this->src1 = new_src1; 
+        this->src[1] = new_src1; 
     }
 
     void connectTac(Tac *tac) {
@@ -278,15 +299,31 @@ public:
     }
 
     void setPreTac(Tac* pre_tac) {
- 
-                   this->preTac = pre_tac;
+        this->preTac = pre_tac;
     }
 
     void dump() {
+        // if(opname == nullptr) {
+        //     printf("Error: TacID%ld Has Empty Opname!\n", TacID);
+        //     return;
+        // }
+        // if(opname.empty()) {
+        //     printf("Error: TacID%ld Has Empty Opname!\n", TacID);
+        //     return;
+        // }
         printf("\tinstr %ld: %s ", TacID, opname.c_str());
-        if(src0 != nullptr) src0->dump();
-        printf(" ");
-        if(src1 != nullptr) src1->dump();
+        if(opcode == Type::PHI) { //跳过第一个Operand
+            auto it = src.begin();
+            it++;
+            for(; it != src.end(); it++) {
+                if((*it) != nullptr) (*it)->dump();
+                printf(" ");
+            }
+        } else {
+            if(src[0] != nullptr) src[0]->dump();
+            printf(" ");
+            if(src[1] != nullptr) src[1]->dump();
+        }
         printf("\n");
     }
 

@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
             optimizer.add_pass(PassType::LoopInvariantCodeMotion);
         } else if(opt == "ssa") {
             optimizer.add_pass(PassType::ConvertSSA);
+            // optimizer.add_pass(PassType::DeadStatementElimination); //删除多余PHI函数
         }
     }
     // optimizer.add_pass(PassType::RevertSSA); //TODO
@@ -123,7 +124,7 @@ int main(int argc, char *argv[]) {
         } else if(opt == "rep") { //report
             ;
         } else if(opt == "ssa") {
-            ;
+            CFGManager::dump_cfg_program(*cfg, std::cout, true);
         }
     }
 

@@ -10,9 +10,13 @@ private:
     std::vector<bool> visited;
     dt_long cmaxTacID;
     int varID = 0;
-    std::unordered_map<Variable*, int> varMap;
-    std::vector<int> varCount;
-    std::vector<std::stack<Variable*>> varStack;
+    std::unordered_map<Variable*, int> varMap;   //old_var -> idx
+    std::vector<int> varCount;                   //idx -> count
+    std::vector<std::stack<Variable*>> varStack; //idx -> stack
+    std::set<CFGBlock*> hasAlready;
+    std::set<CFGBlock*> everOnWorkList;
+    std::queue<CFGBlock*> workList;
+    CFGProcedure* curProc;
 private:
     void compute_reversePostOrder(CFGProcedure* proc);
     void compute_immediate_dominator(CFGProcedure* proc);

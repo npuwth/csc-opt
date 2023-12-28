@@ -174,27 +174,27 @@ void Tac::toC() {
         else std::cout << " = ";
     }
     switch(opcode){
-        case ADD:       src0->toC(); std::cout << " + "; src1->toC(); break;
-        case SUB:       src0->toC(); std::cout << " - "; src1->toC(); break;
-        case MUL:       src0->toC(); std::cout << " * "; src1->toC(); break;
-        case DIV:       src0->toC(); std::cout << " / "; src1->toC(); break;
-        case MOD:       src0->toC(); std::cout << " % "; src1->toC(); break;
-        case NEG:       std::cout << " - "; src0->toC(); break;
-        case CMPEQ:     std::cout << "("; src0->toC(); std::cout << " == "; src1->toC();std::cout << ")";  break;
-        case CMPLE:     std::cout << "("; src0->toC(); std::cout << " <= "; src1->toC();std::cout << ")";  break;
-        case CMPLT:     std::cout << "("; src0->toC(); std::cout << " < "; src1->toC();std::cout << ")";  break;
-        case BR:        std::cout << "goto L"; src0->toC(); break;
-        case BLBC:      std::cout << "if(!"; src0->toC(); std::cout << ") goto L"; src1->toC(); break;
-        case BLBS:      std::cout << "if("; src0->toC(); std::cout << ") goto L"; src1->toC(); break;
-        case CALL:      std::cout << "FP -= " << param_cnt <<"; FP--; func"; src0->toC(); std::cout << "()"; param_cnt = 0; break;
-        case LOAD:      std::cout << "*((long*)"; src0->toC(); std::cout << ")"; break;
-        case STORE:     std::cout << "*((long*)"; src1->toC(); std::cout << ") = "; src0->toC(); break;
-        case MOVE:      src1->toC(); std::cout << " = "; src0->toC(); break;
+        case ADD:       src[0]->toC(); std::cout << " + "; src[1]->toC(); break;
+        case SUB:       src[0]->toC(); std::cout << " - "; src[1]->toC(); break;
+        case MUL:       src[0]->toC(); std::cout << " * "; src[1]->toC(); break;
+        case DIV:       src[0]->toC(); std::cout << " / "; src[1]->toC(); break;
+        case MOD:       src[0]->toC(); std::cout << " % "; src[1]->toC(); break;
+        case NEG:       std::cout << " - "; src[0]->toC(); break;
+        case CMPEQ:     std::cout << "("; src[0]->toC(); std::cout << " == "; src[1]->toC(); std::cout << ")";  break;
+        case CMPLE:     std::cout << "("; src[0]->toC(); std::cout << " <= "; src[1]->toC(); std::cout << ")";  break;
+        case CMPLT:     std::cout << "("; src[0]->toC(); std::cout << " < ";  src[1]->toC(); std::cout << ")";  break;
+        case BR:        std::cout << "goto L"; src[0]->toC(); break;
+        case BLBC:      std::cout << "if(!"; src[0]->toC(); std::cout << ") goto L"; src[1]->toC(); break;
+        case BLBS:      std::cout << "if("; src[0]->toC(); std::cout << ") goto L"; src[1]->toC(); break;
+        case CALL:      std::cout << "FP -= " << param_cnt <<"; FP--; func"; src[0]->toC(); std::cout << "()"; param_cnt = 0; break;
+        case LOAD:      std::cout << "*((long*)"; src[0]->toC(); std::cout << ")"; break;
+        case STORE:     std::cout << "*((long*)"; src[1]->toC(); std::cout << ") = "; src[0]->toC(); break;
+        case MOVE:      src[1]->toC(); std::cout << " = "; src[0]->toC(); break;
         case READ:      std::cout << "ReadLong("; dest->toC(); std::cout << ")";  break;
-        case WRITE:     std::cout << "WriteLong("; src0->toC(); std::cout << ")"; break;
+        case WRITE:     std::cout << "WriteLong("; src[0]->toC(); std::cout << ")"; break;
         case WRL:       std::cout << "WriteLine()"; break;
-        case PARAM:     std::cout << "*(FP - " << param_cnt << ") = "; src0->toC(); param_cnt++; break;
-        case RET:       std::cout << "FP++; FP += " << (((Constant*)src0)->num)/8; break;
+        case PARAM:     std::cout << "*(FP - " << param_cnt << ") = "; src[0]->toC(); param_cnt++; break;
+        case RET:       std::cout << "FP++; FP += " << (((Constant*)src[0])->num)/8; break;
         default:break;
     }
     std::cout << ";" << std::endl;
