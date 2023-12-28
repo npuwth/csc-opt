@@ -155,6 +155,27 @@ void DeadStatementElimination::remove_nop(CFGBlock* blk) {
             delete(now_tac);
         }
     }
+    //如果删除了第一个tac，那么需要更新基本块id和前驱基本块的跳转指令=
+    Tac* first_tac = blk->get_tac_list().front();
+    if(first_tac != nullptr && blk->get_id() != (int)(first_tac->getTacID())) {
+        int old_id = blk->get_id();
+        int new_id = first_tac->getTacID();
+        blk->set_id(new_id);
+        for(auto& pred_blk: blk->get_pred()) {
+            Tac* last_tac = pred_blk->get_tac_list().back();
+            switch(last_tac->getOpcode()) {
+                case Type::BR:
+                    if((int)(((Label*)(last_tac->getSrc0()))->instr_pos) == old_id)
+                        ((Label*)(last_tac->getSrc0()))->instr_pos = new_id; 
+                    break;
+                case Type::BLBC: case Type::BLBS:
+                    if((int)(((Label*)(last_tac->getSrc1()))->instr_pos) == old_id)
+                        ((Label*)(last_tac->getSrc1()))->instr_pos = new_id;
+                    break;
+                default:break;
+            }
+        }
+    }
 }
 
 int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc) {
@@ -209,6 +230,9 @@ int DeadStatementElimination::eliminate_dead_statement(CFGProcedure* proc) {
             } 
         }
         remove_nop(blk);
+    }
+    if(PASS_DEBUG) {
+        std::cout << "eliminate count: " << eliminate_cnt << std::endl;
     }
     return eliminate_cnt;
 }
