@@ -251,5 +251,8 @@ int SimpleConstantPropagation::propagate_constant(CFGProcedure* proc) {
                 gen(def_in, tac, tac->getSrc1());
         }
     }
+    if(PASS_DEBUG) {
+        std::cout << "replace count: " << replace_cnt << std::endl;
+    }
     return replace_cnt;
 }
