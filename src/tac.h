@@ -338,7 +338,7 @@ public:
         switch(this->opcode)
         {
             //无定值
-            case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL:
+            case Type::BR: case Type::BLBC: case Type::BLBS: case Type::CALL: case Type::PHI:
             case Type::STORE: case Type::WRITE: case Type::WRL: case Type::PARAM:
             case Type::ENTER: case Type::RET: case Type::NOP: case Type::ENTRYPC:
                 return NDEF;

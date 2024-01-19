@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
     CFGProgram* cfg = CFGManager::gen_from_program(pg);
 
     //4. 分析 & 优化
+    bool optSSA = 0;
     Optimizer optimizer = Optimizer(cfg);
     for(auto& opt: config.optimization) {
         if(opt == "scp") {
@@ -106,11 +107,20 @@ int main(int argc, char *argv[]) {
         } else if(opt == "licm") {
             optimizer.add_pass(PassType::LoopInvariantCodeMotion);
         } else if(opt == "ssa") {
+            optSSA = 1;
             optimizer.add_pass(PassType::ConvertSSA);
-            // optimizer.add_pass(PassType::DeadStatementElimination); //删除多余PHI函数
         }
     }
-    // optimizer.add_pass(PassType::RevertSSA); //TODO
+
+    bool outputSSA = 0;
+    for(auto& opt: config.backend) {
+        if(opt == "ssa") {
+            outputSSA = 1;
+        }
+    }
+    if(!outputSSA && optSSA) {
+        optimizer.add_pass(PassType::RevertSSA);
+    }
     optimizer.run_pass();
 
     //5. 后端输出
@@ -124,7 +134,8 @@ int main(int argc, char *argv[]) {
         } else if(opt == "rep") { //report
             ;
         } else if(opt == "ssa") {
-            CFGManager::dump_cfg_program(*cfg, std::cout, true);
+            // CFGManager::dump_cfg_program(*cfg, std::cout, true);
+            ;
         }
     }
 
