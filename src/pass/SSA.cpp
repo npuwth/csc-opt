@@ -18,9 +18,19 @@ void ConvertSSA::run() {
         varCount.clear();
         varStack.clear();
         varID = 0;
-        for(auto& sym: proc->get_sym()) {
+        //debug
+        // printf("Variables in Symbol Table:\n");
+        // for(auto& sym: proc->get_sym()) {
+        //     if(sym.second->getType() == OperandType::VAR)
+        //     std::cout << "  " << ((Variable*)sym.second)->getName() << std::endl;
+        // }
+        std::unordered_map<std::string, Operand*> syms(proc->get_sym());
+        for(auto& sym: syms) {
             if(sym.second->getType() == OperandType::VAR) { //只需要对Variable做SSA
                 varMap[(Variable*)sym.second] = varID;
+                //debug
+                // printf("Insert in VarMap: ");
+                // std::cout << ((Variable*)sym.second)->getName() << std::endl;
                 varCount.push_back(0);
                 std::stack<Variable*> s;
                 // s.push((Variable*)sym.second);
@@ -275,7 +285,8 @@ void ConvertSSA::insert_phi_functions(CFGProcedure* proc) {
 Variable* ConvertSSA::gen_name(Variable* var) {
     std::string old_name = var->getName().substr(0, var->getName().find("$"));
     if(varMap.find(var) == varMap.end()) {
-        printf("Error: No Such Var In VarMap!\n");
+        printf("Error: No Such Var In VarMap: ");
+        std::cout << var->getName() << std::endl;
         return nullptr;
     }
     int vid = varMap[var];
