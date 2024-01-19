@@ -260,6 +260,10 @@ public:
         return this->src;
     }
 
+    int getSrcSize() {
+        return this->src.size();
+    }
+
     void addSrc(Operand* x) {
         this->src.push_back(x);
     }

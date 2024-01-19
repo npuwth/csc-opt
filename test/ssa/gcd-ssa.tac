@@ -3,25 +3,25 @@
 	instr 51: nop  
 
 	instr 2: enter 8 
-	instr 52: phi c@-8 c$1 
-	instr 55: move (52) c$0
-	instr 53: phi a@24 
-	instr 56: move (53) a$0
-	instr 54: phi b@16 
-	instr 57: move (54) b$0
-	instr 3: cmpeq b$0 0
+	instr 52: phi c$0 c$2 
+	instr 55: move (52) c$1
+	instr 53: phi a$0 a$2 
+	instr 56: move (53) a$1
+	instr 54: phi b$0 b$2 
+	instr 57: move (54) b$1
+	instr 3: cmpeq b$1 0
 	instr 4: blbs (3) [14]
-	instr 5: move a$0 c$1
-	instr 6: move b$0 a$1
-	instr 7: mod c$1 b$0
-	instr 8: move (7) b$1
-	instr 9: write c$1 
-	instr 10: write a$1 
-	instr 11: write b$1 
+	instr 5: move a$1 c$2
+	instr 6: move b$1 a$2
+	instr 7: mod c$2 b$1
+	instr 8: move (7) b$2
+	instr 9: write c$2 
+	instr 10: write a$2 
+	instr 11: write b$2 
 	instr 12: wrl  
 	instr 13: br [52] 
 	instr 14: add res_base#32744 GP
-	instr 15: store a$0 (14)
+	instr 15: store a$1 (14)
 	instr 16: ret 16 
 
 	instr 18: enter 0 

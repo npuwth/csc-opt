@@ -22,11 +22,10 @@ void ConvertSSA::run() {
             if(sym.second->getType() == OperandType::VAR) { //只需要对Variable做SSA
                 varMap[(Variable*)sym.second] = varID;
                 varCount.push_back(0);
-                // varStack[varID].push((Variable*)sym.second);
                 std::stack<Variable*> s;
-                // s.push(gen_name((Variable*)sym.second)); //?
-                s.push((Variable*)sym.second);
+                // s.push((Variable*)sym.second);
                 varStack.push_back(s);
+                gen_name((Variable*)sym.second);
                 varID++;
             }
         }
@@ -275,10 +274,14 @@ void ConvertSSA::insert_phi_functions(CFGProcedure* proc) {
 
 Variable* ConvertSSA::gen_name(Variable* var) {
     std::string old_name = var->getName().substr(0, var->getName().find("$"));
+    if(varMap.find(var) == varMap.end()) {
+        printf("Error: No Such Var In VarMap!\n");
+        return nullptr;
+    }
     int vid = varMap[var];
     int i = varCount[vid];
     varCount[vid]++;
-    std::string new_name =  old_name + "$" + std::to_string(i);
+    std::string new_name = old_name + "$" + std::to_string(i);
     Variable* op = new Variable(new_name, var->getOffset(), true);
     curProc->get_sym().insert({new_name, op});
     varStack[vid].push(op);
@@ -314,6 +317,7 @@ void ConvertSSA::rename_variables(CFGBlock* blk) {
     for(; it != tl.end(); it++) {
         Tac* tac = *it;
         Operand *src0, *src1;
+        // if(tac->getSrcSize() < 1) continue;
         src0 = tac->getSrc0(); //RHS
         if(src0 != nullptr && src0->getType() == OperandType::VAR) { //只需要处理Variable
             // if(PASS_DEBUG) {
@@ -321,6 +325,7 @@ void ConvertSSA::rename_variables(CFGBlock* blk) {
             // }
             tac->rebindSrc0(varStack[varMap[(Variable*)src0]].top());
         }
+        // if(tac->getSrcSize() < 2) continue;
         src1 = tac->getSrc1(); //LHS(MOVE) or RHS
         if(src1 != nullptr && src1->getType() == OperandType::VAR) {
             // if(PASS_DEBUG) {
@@ -337,14 +342,15 @@ void ConvertSSA::rename_variables(CFGBlock* blk) {
     for(auto& succ: blk->get_succ()) {
         if(succ == nullptr) continue;
         for(auto& tac: succ->get_tac_list()) {
-            if(tac->getOpcode() != Type::PHI) break;
-            Variable* old_var = (Variable*)(tac->getSrc0());
+            if(tac->getOpcode() == Type::PHI) {
+                Variable* old_var = (Variable*)(tac->getSrc0());
+                tac->addSrc(varStack[varMap[old_var]].top());
+            }
             // tac->dump();
             // old_var->dump();
             // tac->dump();
             // printf("var index:%d\n", varMap[old_var]);
             // printf("size:     %d\n", varStack[varMap[old_var]].size());
-            tac->addSrc(varStack[varMap[old_var]].top());
         }
     }
     for(auto& succ: blk->get_succ()) {
@@ -354,6 +360,10 @@ void ConvertSSA::rename_variables(CFGBlock* blk) {
     for(auto& tac: blk->get_tac_list()) {
         if(tac->getOpcode() == Type::MOVE) {
             Operand* op = tac->getSrc1();
+            if(op == nullptr) {
+                printf("Error: Should Not Be Empty!\n");
+                return;
+            }
             if(op->getType() == OperandType::VAR) {
                 Variable* var = (Variable*)op;
                 std::string old_name = var->getName().substr(0, var->getName().find("$"));
