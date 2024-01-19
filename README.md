@@ -9,13 +9,19 @@ CS380C: Advanced Compiler Techniques (utexas)
 ### Lab2: Dataflow Analysis and Optimizations 
 
 1. Construct Control Flow Graph;
-2. Strongly Connected Region Analysis;
-3. Reaching Definitions -> Constant Propagation; 
-4. Live Variables -> Dead Statement Elimination;
+2. Reaching Definitions -> Constant Propagation; 
+3. Live Variables -> Dead Statement Elimination;
 
 ### Lab3: Single Static Assignment and Optimizations
 
 1. Build SSA Form;
-2. SSA-based Constant Propagation;
-3. SSA-based Loop Invariant Code Motion;
-4. Translate back to non-SSA Form;
+2. Translate back to non-SSA Form;
+
+### Usage Example
+
+```shell
+mkdir build && cd build
+cmake ..
+make
+./csc-opt --backend=ssa,3addr --opt=ssa -o ../test/ssa/gcd-ssa.tac ../test/tac/gcd.tac
+```
